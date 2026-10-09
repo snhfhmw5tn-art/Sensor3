@@ -224,7 +224,7 @@
   },
   {
     "number": 17,
-    "commitDateUtc": null,
+    "commitDateUtc": "2026-10-09T19:05:22+02:00",
     "description": "Inspelning, simulering och jämförelse",
     "status": "Implemented",
     "testResult": "207 MSTest passed; 15 synthetic scenarios; Android/Windows 0 errors/warnings; smoke passed.",
@@ -233,7 +233,7 @@
     "blockers": [
       "Independent recordings/physical ground truth and on-device long-run CPU/battery NotRun; context event integration checked next."
     ],
-    "latestCommit": "Unknown"
+    "latestCommit": "d84cf4d1804ccb7a3f22286b777e5222a1e4aa8a"
   },
   {
     "number": 18,
