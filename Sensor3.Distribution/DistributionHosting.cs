@@ -75,6 +75,34 @@ public static class DistributionHosting
     }
     public static void MapDistribution(this IEndpointRouteBuilder endpoints)
     {
+        endpoints.MapGet("/api/releases/appinstaller", async (HttpContext context, ReleaseStore store, BuildInfo build, DistributionOptions options) => await SafeAsync(context, async () =>
+        {
+            var channel = ParseEnum<ReleaseChannel>(context.Request.Query["channel"].ToString());
+            var release = ReleaseSelection.Latest(await store.ListAsync(context.RequestAborted), ClientPlatform.Windows, channel, build.ApplicationVersion);
+            if (release is null) return Results.NotFound();
+            var download = await store.OpenDownloadAsync(release.Id, context.RequestAborted);
+            if (download is null) return Results.NotFound();
+            await using var package = download.Value.Content;
+            context.Response.Headers.CacheControl = "no-store";
+            context.Response.Headers.XContentTypeOptions = "nosniff";
+            return Results.Content(AppInstallerManifest.Create(release, package, options.PublicBaseUrl), "application/appinstaller", Encoding.UTF8);
+        }));
+        endpoints.MapGet("/api/updates/authenticated", async (HttpContext context, ReleaseStore store, BuildInfo build, DistributionOptions options) => await SafeAsync(context, async () =>
+        {
+            if (string.IsNullOrWhiteSpace(options.ManifestSigningKeyPath)) return Results.StatusCode(503);
+            var nonce = context.Request.Query["nonce"].ToString();
+            if (nonce.Length != 64 || !nonce.All(char.IsAsciiHexDigit)) throw new ArgumentException("Ogiltig nonce.");
+            if (!long.TryParse(context.Request.Query["buildNumber"], out var number)) throw new ArgumentException("Buildnummer saknas.");
+            var result = ReleaseSelection.Check(await store.ListAsync(context.RequestAborted), ParseEnum<ClientPlatform>(context.Request.Query["platform"].ToString()),
+                ParseEnum<ReleaseChannel>(context.Request.Query["channel"].ToString()), context.Request.Query["version"].ToString(), number, build.ApplicationVersion);
+            using var rsa = RSA.Create();
+            rsa.ImportFromPem(await File.ReadAllTextAsync(options.ManifestSigningKeyPath, context.RequestAborted));
+            if (rsa.KeySize < 2048) throw new InvalidDataException("Manifestnyckeln är för svag.");
+            var payload = JsonSerializer.SerializeToUtf8Bytes(new AuthenticatedUpdate(nonce, DateTimeOffset.UtcNow.AddMinutes(5), result), ReleaseStore.JsonOptions);
+            var signature = rsa.SignData(payload, HashAlgorithmName.SHA256, RSASignaturePadding.Pss);
+            context.Response.Headers.CacheControl = "no-store";
+            return Results.Json(new SignedUpdateEnvelope(Convert.ToBase64String(payload), Convert.ToBase64String(signature)), ReleaseStore.JsonOptions);
+        }));
         endpoints.MapGet("/api/releases", async (HttpContext context, ReleaseStore store, BuildInfo build) => await SafeAsync(context, async () =>
         {
             var releases = (await store.ListAsync(context.RequestAborted)).Where(x => !x.IsRevoked);
@@ -161,7 +189,7 @@ public static class DistributionHosting
         catch (AntiforgeryValidationException) { return Results.BadRequest(new { error = "Ogiltigt formulärskydd. Ladda om sidan." }); }
         catch (JsonException) { return Results.BadRequest(new { error = "Ogiltigt release-manifest." }); }
         catch (ArgumentException exception) { return Results.BadRequest(new { error = exception.Message }); }
-        catch (Exception exception) when (exception is IOException or InvalidDataException)
+        catch (Exception exception) when (exception is IOException or InvalidDataException or CryptographicException)
         {
             context.RequestServices.GetRequiredService<ILogger<ReleaseStore>>().LogError(exception, "Releasekatalog eller installationsfil otillgänglig");
             return Results.Problem("Releaseinformationen är tillfälligt otillgänglig.", statusCode: 503);

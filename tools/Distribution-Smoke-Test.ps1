@@ -1,10 +1,10 @@
-# Synthetic, non-installable packages and ephemeral credentials; never publishes to the real catalogue.
+# Real debug-signed APK and ephemeral credentials/manifest key; never publishes to the real catalogue.
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot
 $testRoot = Join-Path ([IO.Path]::GetTempPath()) ('sensor3-http-' + [Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $testRoot | Out-Null
 New-Item -ItemType Directory -Path "$root/artifacts" -Force | Out-Null
-$settings = @('ASPNETCORE_ENVIRONMENT','Distribution__StorageRoot','Distribution__AdminUsername','Distribution__AdminPasswordHash')
+$settings = @('ASPNETCORE_ENVIRONMENT','Distribution__StorageRoot','Distribution__AdminUsername','Distribution__AdminPasswordHash','Distribution__AndroidApkSignerPath','Distribution__AndroidAaptPath','Distribution__AndroidCertificateSha256','Distribution__JavaPath','Distribution__ManifestSigningKeyPath')
 $previous = @{}
 foreach ($name in $settings) { $previous[$name] = [Environment]::GetEnvironmentVariable($name,'Process') }
 $api = $null; $dashboard = $null; $checks = 0
@@ -25,6 +25,20 @@ try {
     $env:ASPNETCORE_ENVIRONMENT = 'Development'
     $env:Distribution__StorageRoot = Join-Path $testRoot 'store'
     $env:Distribution__AdminUsername = 'temporary-test-admin'
+    $sdkRoot = if ($env:Sensor3TestAndroidSdk) { $env:Sensor3TestAndroidSdk } else { Join-Path $env:LOCALAPPDATA 'Android/Sdk' }
+    $sdk = Join-Path $sdkRoot 'build-tools/36.0.0'
+    $env:Distribution__AndroidApkSignerPath = Join-Path $sdk 'lib/apksigner.jar'
+    $env:Distribution__AndroidAaptPath = Join-Path $sdk 'aapt.exe'
+    $javaRoot = if ($env:Sensor3TestJava) { $env:Sensor3TestJava } else { Join-Path $env:LOCALAPPDATA 'Microsoft/Jdk' }
+    $env:Distribution__JavaPath = Join-Path $javaRoot 'bin/java.exe'
+    $package = Join-Path $root 'Sensor3.Mobile/bin/Debug/net10.0-android/se.qsys.sensor3-Signed.apk'
+    if (!(Test-Path -LiteralPath $package)) { throw 'Build Android debug APK before running this check.' }
+    $signature = & $env:Distribution__JavaPath -jar $env:Distribution__AndroidApkSignerPath verify --print-certs $package
+    if ($LASTEXITCODE -ne 0) { throw 'Debug APK signature failed verification.' }
+    $env:Distribution__AndroidCertificateSha256 = [regex]::Match(($signature -join "`n"),'Signer #1 certificate SHA-256 digest: ([0-9a-fA-F]{64})').Groups[1].Value
+    $signer = [Security.Cryptography.RSA]::Create(2048)
+    $env:Distribution__ManifestSigningKeyPath = Join-Path $testRoot 'manifest-key.pem'
+    [IO.File]::WriteAllText($env:Distribution__ManifestSigningKeyPath,$signer.ExportPkcs8PrivateKeyPem())
     $password = [Guid]::NewGuid().ToString('N')
     $salt = [Security.Cryptography.RandomNumberGenerator]::GetBytes(32)
     $derived = [Security.Cryptography.Rfc2898DeriveBytes]::Pbkdf2($password, $salt, 210000, [Security.Cryptography.HashAlgorithmName]::SHA256, 32)
@@ -52,19 +66,24 @@ try {
     Check ($admin.StatusCode -eq 200 -and $admin.Content -match 'Release-manifest') 'Authenticated administration'
     $csrf = Token $admin.Content
     Check ((Request '/admin/releases/publish' 'POST' $session).StatusCode -eq 400) 'Publication requires CSRF'
-    $package = Join-Path $testRoot 'synthetic-test.apk'
-    $archive = [IO.Compression.ZipFile]::Open($package, [IO.Compression.ZipArchiveMode]::Create)
-    try { $writer = [IO.StreamWriter]::new($archive.CreateEntry('AndroidManifest.xml').Open()); $writer.Write('Synthetic fixture, not installable'); $writer.Dispose() } finally { $archive.Dispose() }
     $manifest = @{
-        platform='Android'; channel='Development'; version='0.2.0'; buildNumber=1; iterationNumber=1
+        platform='Android'; channel='Development'; version='0.3.0'; buildNumber=3; iterationNumber=1
         gitCommitHash=(& git -C $root rev-parse HEAD).Trim(); gitCommitDateUtc=(& git -C $root show -s --format=%cI HEAD).Trim()
-        releaseNotes='Synthetic HTTP test fixture; not a published application'; expectedSha256=(Get-FileHash $package -Algorithm SHA256).Hash.ToLowerInvariant()
+        releaseNotes='Debug-signed HTTP test fixture; not a production release'; expectedSha256=(Get-FileHash $package -Algorithm SHA256).Hash.ToLowerInvariant()
         compatibility=@{minimumServerVersion='0.2.0'}; updatePolicy=@{mandatory=$true}
     } | ConvertTo-Json -Depth 4
     $form = @{manifest=$manifest;artifact=Get-Item $package;__RequestVerificationToken=$csrf}
-    Check ((Request '/admin/releases/publish' 'POST' $session $null $form).StatusCode -eq 302) 'Publish synthetic package'
+    Check ((Request '/admin/releases/publish' 'POST' $session $null $form).StatusCode -eq 302) 'Publish signature-verified debug APK to temporary catalogue'
     $latest = Invoke-RestMethod 'http://127.0.0.1:5303/api/releases/latest?platform=Android&channel=Development'
-    Check ($latest.manifest.version -eq '0.2.0') 'Shared API catalogue'
+    Check ($latest.manifest.version -eq '0.3.0') 'Shared API catalogue'
+    $nonce = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+    $signed = Invoke-RestMethod "http://127.0.0.1:5303/api/updates/authenticated?platform=Android&channel=Development&version=0.1.0&buildNumber=1&nonce=$nonce"
+    $payload = [Convert]::FromBase64String($signed.payload)
+    Check ($signer.VerifyData($payload,[Convert]::FromBase64String($signed.signature),[Security.Cryptography.HashAlgorithmName]::SHA256,[Security.Cryptography.RSASignaturePadding]::Pss)) 'Authenticated update signature'
+    $authenticated = [Text.Encoding]::UTF8.GetString($payload) | ConvertFrom-Json
+    Check ($authenticated.nonce -eq $nonce -and $authenticated.result.release.id -eq $latest.id) 'Authenticated selection bound to nonce'
+    Check ((Request '/api/updates/authenticated?nonce=bad').StatusCode -eq 400) 'Invalid nonce denied'
+    Check ((Request '/api/releases/appinstaller?channel=Stable').StatusCode -eq 404) 'No invented App Installer package'
     Check ((Request '/download?platform=Android&channel=Development').Content -match $latest.artifact.sha256) 'Portal shows real checksum'
     $download = Request "/api/releases/$($latest.id)/download"
     Check ($download.StatusCode -eq 200 -and $download.Headers['X-Content-Type-Options'] -contains 'nosniff') 'Download attachment'
@@ -86,7 +105,7 @@ try {
     $csrf = Token (Request '/admin/login' 'GET' $session).Content
     for ($attempt=0; $attempt -lt 3; $attempt++) { $limited = Request '/admin/login' 'POST' $session @{username=$env:Distribution__AdminUsername;password='wrong';__RequestVerificationToken=$csrf} }
     Check ($limited.StatusCode -eq 429) 'Login rate limit'
-    Write-Host "PASS: $checks HTTP distribution/security checks; only ephemeral synthetic fixtures used."
+    Write-Host "PASS: $checks HTTP distribution/security checks; debug-signed APK used only in temporary catalogue."
 } finally {
     if ($api -and !$api.HasExited) { Stop-Process -Id $api.Id }
     if ($dashboard -and !$dashboard.HasExited) { Stop-Process -Id $dashboard.Id }
@@ -96,4 +115,5 @@ try {
     if (!$resolvedTestRoot.StartsWith($allowedRoot,[StringComparison]::OrdinalIgnoreCase) -or !(Split-Path $resolvedTestRoot -Leaf).StartsWith('sensor3-http-')) { throw 'Unsafe cleanup target' }
     Remove-Item -LiteralPath $resolvedTestRoot -Recurse -Force
     $password = $null
+    if ($signer) { $signer.Dispose() }
 }

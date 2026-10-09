@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 Push-Location (Split-Path $PSScriptRoot)
 try {
-    dotnet build Sensor3.sln -p:Sensor3WindowsOnly=true --nologo
+    dotnet build Sensor3.sln --nologo
     if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
     dotnet test Sensor3.Tests/Sensor3.Tests.csproj --no-build --logger 'trx;LogFileName=iteration-tests.trx' --results-directory artifacts/test-results
     if ($LASTEXITCODE -ne 0) { throw 'Tests failed' }

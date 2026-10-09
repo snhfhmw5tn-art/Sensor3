@@ -41,6 +41,10 @@ else
                 </dl>
                 <p class="notes">@release.Manifest.ReleaseNotes</p>
                 <a class="download-button" href="@($"/api/releases/{release.Id}/download")" data-enhance-nav="false">Ladda ned @release.Artifact.FileName</a>
+                @if (platform == ClientPlatform.Windows)
+                {
+                    <a class="download-button" href="@($"/api/releases/appinstaller?channel={SelectedChannel}")" data-enhance-nav="false">Installera med automatiska uppdateringskontroller</a>
+                }
             }
             <h3>Installationsinstruktioner</h3>
             @if (platform == ClientPlatform.Android)

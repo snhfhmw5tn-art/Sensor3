@@ -1,0 +1,41 @@
+@page "/updates"
+@inject IServiceProvider Services
+@inject Sensor3.Contracts.BuildInfo Build
+<h1>Installation och uppdateringar</h1>
+<p>Byggd version @Build.ApplicationVersion · iteration @Build.LatestImplementedIteration · commit @Build.GitCommitHash</p>
+<p>Commitdatum: @Sensor3.Core.BuildMetadata.SwedishTime(Build.GitCommitDateUtc)</p>
+@if (Updater is null)
+{
+    <p>Installera Android- eller Windows-appen via <a href="/download">nedladdningsportalen</a>.</p>
+}
+else
+{
+    <p>Installerad: @Updater.Installed.Version (build @Updater.Installed.BuildNumber)</p>
+    <p role="status">@Updater.Status</p>
+    <button disabled="@busy" @onclick="Check">Kontrollera uppdateringar</button>
+    @if (Updater.Available?.Release is { } release)
+    {
+        <p>Tillgänglig: @release.Manifest.Version (build @release.Manifest.BuildNumber), iteration @release.Manifest.IterationNumber, kanal @release.Manifest.Channel</p>
+        <p>Commit: @release.Manifest.GitCommitHash · @Sensor3.Core.BuildMetadata.SwedishTime(release.Manifest.GitCommitDateUtc)</p>
+        <p>@release.Manifest.ReleaseNotes</p>
+        @if (Updater.Available.UpdateAvailable)
+        {
+            <p>@(Updater.Available.Mandatory ? "Uppdateringen är obligatorisk enligt serverns policy." : "Uppdateringen är valfri.") Avsluta aktiva sensorsessioner före installation. Operativsystemet ber dig godkänna installationen.</p>
+            <button disabled="@busy" @onclick="Install">Hämta och installera</button>
+        }
+    }
+}
+@code {
+    private Sensor3.Contracts.IApplicationUpdateService? Updater => Services.GetService(typeof(Sensor3.Contracts.IApplicationUpdateService)) as Sensor3.Contracts.IApplicationUpdateService;
+    private bool busy;
+    protected override async Task OnInitializedAsync() { if (Updater is not null) await Check(); }
+    private Task Check() => Run(() => Updater!.CheckAsync());
+    private Task Install() => Run(() => Updater!.InstallAsync());
+    private async Task Run(Func<Task> action)
+    {
+        busy = true;
+        try { await action(); }
+        catch (Exception exception) when (exception is HttpRequestException or System.IO.IOException or InvalidOperationException or System.IO.InvalidDataException or System.Security.Cryptography.CryptographicException or System.Text.Json.JsonException or ArgumentException or FormatException or OperationCanceledException) { /* Service exposes the failure in Status. */ }
+        finally { busy = false; }
+    }
+}

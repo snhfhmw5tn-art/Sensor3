@@ -10,6 +10,13 @@ namespace Sensor3.Distribution;
 
 public sealed record DistributionOptions
 {
+    public string ManifestSigningKeyPath { get; init; } = "";
+    public string AndroidApkSignerPath { get; init; } = "";
+    public string AndroidAaptPath { get; init; } = "";
+    public string AndroidCertificateSha256 { get; init; } = "";
+    public string JavaPath { get; init; } = "";
+    public string WindowsSignToolPath { get; init; } = "";
+    public string PublicBaseUrl { get; init; } = "";
     public string StorageRoot { get; init; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sensor3", "distribution");
     public long MaximumArtifactBytes { get; init; } = 100 * 1024 * 1024;
     public string AdminUsername { get; init; } = "";
@@ -22,11 +29,13 @@ public sealed class ReleaseStore
     private readonly DistributionOptions options;
     private readonly ILogger<ReleaseStore> logger;
     private readonly string root;
-    public ReleaseStore(DistributionOptions options, ILogger<ReleaseStore> logger)
+    private readonly IReleasePackageVerifier verifier;
+    public ReleaseStore(DistributionOptions options, ILogger<ReleaseStore> logger, IReleasePackageVerifier? verifier = null)
     {
         if (options.MaximumArtifactBytes is < 1 or > 1024L * 1024 * 1024) throw new ArgumentException("Ogiltig storleksgräns.");
         this.options = options;
         this.logger = logger;
+        this.verifier = verifier ?? new PackageVerifier(options);
         root = Path.GetFullPath(options.StorageRoot);
         Directory.CreateDirectory(root);
     }
@@ -71,6 +80,7 @@ public sealed class ReleaseStore
             var checksum = Convert.ToHexStringLower(hash.GetHashAndReset());
             if (!string.Equals(checksum, manifest.ExpectedSha256, StringComparison.OrdinalIgnoreCase)) throw new ArgumentException("SHA-256 stämmer inte med manifestet.");
             ValidatePackage(temporary, manifest.Platform);
+            await verifier.VerifyAsync(temporary, manifest, cancellationToken);
             await using var catalogueLock = await LockAsync(cancellationToken);
             var releases = (await ListAsync(cancellationToken)).ToList();
             if (releases.Any(x => x.Manifest.Platform == manifest.Platform && x.Manifest.Channel == manifest.Channel &&
@@ -148,7 +158,7 @@ public sealed class ReleaseStore
             var manifestName = platform == ClientPlatform.Android ? "AndroidManifest.xml" : "AppxManifest.xml";
             if (archive.Entries.Count is < 1 or > 100000 || archive.GetEntry(manifestName) is not { Length: > 0 })
                 throw new ArgumentException("Paketet saknar plattformens manifest.");
-            // No extraction or execution. Signature and upgrade testing belongs to iteration 03.
+            // Structural check only; configured verifier authenticates signature and embedded identity.
         }
         catch (InvalidDataException) { throw new ArgumentException("Installationsfilen är inte ett giltigt APK/MSIX-arkiv."); }
     }

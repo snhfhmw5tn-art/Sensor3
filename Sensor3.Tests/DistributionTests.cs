@@ -176,7 +176,11 @@ public sealed class DistributionTests
         var results = await Task.WhenAll(Publish(), Publish());
         Assert.AreEqual(1, results.Count(x => x)); Assert.HasCount(1, await store.ListAsync());
     }
-    private ReleaseStore Store(long maximum = 1024 * 1024) => new(new() { StorageRoot = root, MaximumArtifactBytes = maximum }, NullLogger<ReleaseStore>.Instance);
+    private sealed class FixtureVerifier : IReleasePackageVerifier
+    {
+        public Task VerifyAsync(string path, ReleaseManifest manifest, CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+    private ReleaseStore Store(long maximum = 1024 * 1024) => new(new() { StorageRoot = root, MaximumArtifactBytes = maximum }, NullLogger<ReleaseStore>.Instance, new FixtureVerifier());
     private static ReleaseManifest Manifest(string version = "1.0.0", long build = 1) => new() { Platform = ClientPlatform.Android, Channel = ReleaseChannel.Development,
         Version = version, BuildNumber = build, GitCommitHash = new('a', 40), GitCommitDateUtc = DateTimeOffset.Parse("2026-01-01T00:00:00Z"),
         IterationNumber = 1, ExpectedSha256 = new('a', 64), ReleaseNotes = "Synthetic test fixture, not a release", Compatibility = new("0.2.0") };

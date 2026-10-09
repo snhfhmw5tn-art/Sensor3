@@ -12,11 +12,11 @@ try {
         catch { if ($attempt -eq 19) { throw }; Start-Sleep -Milliseconds 500 }
     }
     $info = Invoke-RestMethod http://127.0.0.1:5301/api/system/build-info
-    if ($info.applicationVersion -ne '0.2.0') { throw 'API version mismatch' }
+    if ($info.applicationVersion -ne '0.3.0') { throw 'API version mismatch' }
     $entries = Invoke-RestMethod http://127.0.0.1:5301/api/system/iterations
     if ($entries.Count -ne 18) { throw 'Manifest mismatch' }
     $about = Invoke-WebRequest http://127.0.0.1:5302/about
-    if ($about.StatusCode -ne 200 -or $about.Content -notmatch 'Om Sensor 3' -or $about.Content -notmatch '0.2.0') { throw 'About failed' }
+    if ($about.StatusCode -ne 200 -or $about.Content -notmatch 'Om Sensor 3' -or $about.Content -notmatch '0.3.0') { throw 'About failed' }
     if ($info.gitCommitHash -ne 'Unknown') {
         $expected = (& git -C $root rev-parse HEAD).Trim()
         if ($expected -ne $info.gitCommitHash) { throw 'Git hash mismatch' }
@@ -28,3 +28,4 @@ try {
     if ($api -and !$api.HasExited) { Stop-Process -Id $api.Id }
     if ($dashboard -and !$dashboard.HasExited) { Stop-Process -Id $dashboard.Id }
 }
+

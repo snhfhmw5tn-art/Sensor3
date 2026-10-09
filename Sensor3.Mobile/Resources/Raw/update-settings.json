@@ -1,0 +1,6 @@
+{
+  "serverUrl": "",
+  "manifestPublicKeyPem": "",
+  "channel": "Stable",
+  "maximumPackageBytes": 104857600
+}
