@@ -74,7 +74,7 @@
   },
   {
     "number": 6,
-    "commitDateUtc": null,
+    "commitDateUtc": "2026-10-09T15:14:52.0000000+00:00",
     "description": "GPS, WiFi och Bluetooth",
     "status": "Implemented",
     "testResult": "124 passed, 0 failed, 0 skipped (MSTest); Android + Windows VS MSBuild: 0 errors/warnings; HTTP metadata/browser boundary and 32 distribution checks passed; Android 14 TC53 APK install and process launch passed",
@@ -84,7 +84,7 @@
       "Native radio/location grant-deny, GPS fix accuracy, WiFi freshness and BLE advertisements need manual validation",
       "Windows radio/location validation pending; no production release published"
     ],
-    "latestCommit": "Unknown"
+    "latestCommit": "22250b8b601ae7c40aea3231da6dcb6009c61402"
   },
   {
     "number": 7,
