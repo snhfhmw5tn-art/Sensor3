@@ -2,11 +2,19 @@
 
 ## Komplettering: Visual Studios byggmiljö
 
-Senare kontroll med Visual Studios egen MSBuild reproducerade MSB4018: installationen saknar `VC\Tools\MSVC`. Detta fel syntes inte i tidigare `dotnet build`-kontroller. Windows-bygge i IDE är därför ännu inte godkänt.
+Kontroll med Visual Studios egen MSBuild reproducerade först MSB4018: installationen saknade `VC\Tools\MSVC`. Detta fel syntes inte i tidigare `dotnet build`-kontroller. Efter installation av MSVC 14.51.36231 bygger hela solutionen med Visual Studios egen MSBuild för Android och Windows: 0 fel och 0 varningar (45,78 sekunder). Kontroll utförd på ren commit `4f7113d`.
 
 SDK-sökvägar med kontrollerade lokala standardmappar har lagts till i Directory.Build.props för att åtgärda XA5300 när IDE har gamla miljövariabler. MSVC-komponenten deklareras i .vsconfig. Sju MSTest-fall passerar efter ändringen.
 
-Installationsförsöket med administratörsrättigheter stoppades av Visual Studio Installer med `VSProcessesRunning`. Användaren behöver spara och stänga Visual Studio innan installationen kan fortsätta. Inga användarprocesser stängdes med tvång. Verifiera hela solutionen med Visual Studios MSBuild efter installation.
+Installationen slutfördes efter att användaren stängt Visual Studio. Installationsloggen rapporterade 94 aktiviteter utan fel och avslutningskod 0. Efter bygget passerade alla sju MSTest-fall samt API/dashboard-smoketest med korrekt Git-metadata.
+
+Byggkommando från repots rot:
+
+```powershell
+& 'C:\Program Files\Microsoft Visual Studio\18\Professional\MSBuild\Current\Bin\MSBuild.exe' Sensor3.sln /restore /t:Build /p:Configuration=Debug /m:1 /nr:false /v:minimal /nologo
+```
+
+Bygglogg: `artifacts/visual-studio-build.log` (lokal, inte versionshanterad). IDE:s F5-start och native About-navigation är separata manuella kontroller enligt nedan.
 
 Testad checkout: `C:\Users\boris.gasic\source\repos\snhfhmw5tn-art\Sensor3`. Version 0.1.0. Testomfattningen är den implementerade grundplattformen, inte sensorfunktionerna i senare iterationer.
 
