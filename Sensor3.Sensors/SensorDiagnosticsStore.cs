@@ -128,7 +128,7 @@ public sealed class SensorDiagnosticsStore : ISensorDiagnosticsReceiver
                 (age ?? (entry.StartedAt is { } started ? clock.GetElapsedTime(started) : TimeSpan.Zero)) >= options.StaleAfter)
                 status = SensorDiagnosticStatus.Stale;
             return new SensorDiagnostic(entry.Descriptor, Description(entry.Descriptor.Kind), status, entry.Permission,
-                false, "Ingen aktiv positioneringsalgoritm i denna iteration", entry.Latest is null ? null : entry.Latest with { Values = entry.Latest.Values.ToArray() },
+                false, "Ingen aktiv analyskoppling registrerad i denna diagnostik", entry.Latest is null ? null : entry.Latest with { Values = entry.Latest.Values.ToArray() },
                 entry.Filtered.ToArray(), entry.History.Select(x => x with { Raw = x.Raw.ToArray(), Filtered = x.Filtered.ToArray() }).ToArray(),
                 entry.Count, entry.Rejected, entry.Count < 2 ? null : (entry.Count - 1) / (entry.LastTime - entry.FirstTime),
                 entry.RequestedFrequency, age, entry.Error);

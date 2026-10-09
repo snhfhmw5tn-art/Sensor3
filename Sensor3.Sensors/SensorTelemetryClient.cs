@@ -8,7 +8,7 @@ using Sensor3.Contracts;
 namespace Sensor3.Sensors;
 
 public sealed class SensorTelemetryClient(string deviceId, ISensorProvider provider, SensorDiagnosticsStore store,
-    BuildInfo build, IReadOnlyList<IterationInfo> iterations, ILogger<SensorTelemetryClient> logger) : ITelemetryClient
+    BuildInfo build, IReadOnlyList<IterationInfo> iterations, ILogger<SensorTelemetryClient> logger, NativeObservationBus? observations = null, IAnalysisContextSource? analysis = null, IForkliftMotionEstimator? vehicle = null) : ITelemetryClient
 {
     private readonly SemaphoreSlim lifecycle = new(1);
     private Channel<TelemetryEvent>? events;
@@ -31,6 +31,7 @@ public sealed class SensorTelemetryClient(string deviceId, ISensorProvider provi
     {
         if (endpoint.Scheme != "https" || endpoint.UserInfo.Length != 0 || endpoint.Query.Length != 0 || endpoint.Fragment.Length != 0)
             throw new ArgumentException("Ange en HTTPS-server utan inloggningsuppgifter eller query-parametrar.");
+        if (provider.IsRunning) throw new InvalidOperationException("Stoppa insamlingen före en ny telemetrisession. Anslut sedan och starta sensorer.");
         if (string.IsNullOrWhiteSpace(token)) throw new ArgumentException("Enhetstoken krävs.");
         await lifecycle.WaitAsync(cancellationToken);
         try
@@ -38,7 +39,7 @@ public sealed class SensorTelemetryClient(string deviceId, ISensorProvider provi
             if (lifetime is not null) throw new InvalidOperationException("Koppla från den nuvarande sessionen först.");
             var catalogue = store.GetSnapshot().Sensors.Select(x => x.Descriptor).ToArray();
             if (catalogue.Length == 0) catalogue = (await provider.DiscoverAsync(cancellationToken)).ToArray();
-            var registration = new TelemetryRegistration(new(deviceId, build.TargetPlatform.Contains("android", StringComparison.OrdinalIgnoreCase) ? ClientPlatform.Android : ClientPlatform.Windows, build), Guid.NewGuid(), mode, catalogue, iterations);
+            var registration = new TelemetryRegistration(new(deviceId, build.TargetPlatform.Contains("android", StringComparison.OrdinalIgnoreCase) ? ClientPlatform.Android : ClientPlatform.Windows, build), Guid.NewGuid(), mode, catalogue, iterations, (analysis?.GetAnalysisContext() ?? new AnalysisContext()) with { GpsOrigin = vehicle?.GetGpsOrigin() });
             var hub = new HubConnectionBuilder().WithUrl(new Uri(endpoint.AbsoluteUri.TrimEnd('/') + "/hubs/sensors"), options =>
             { options.Headers["X-Sensor3-DeviceId"] = deviceId; options.AccessTokenProvider = () => Task.FromResult<string?>(token); }).Build();
             try
@@ -51,20 +52,26 @@ public sealed class SensorTelemetryClient(string deviceId, ISensorProvider provi
             events = Channel.CreateBounded<TelemetryEvent>(new BoundedChannelOptions(4096) { FullMode = BoundedChannelFullMode.Wait, SingleReader = true });
             packets = bytes = dropped = 0; started = Stopwatch.GetTimestamp(); status = "Connected";
             provider.ReadingReceived += Receive; provider.StateChanged += State;
+            if (observations is not null) { observations.LocationReceived += Location; observations.WifiReceived += Wifi; observations.BluetoothReceived += Bluetooth; } if (analysis is not null) analysis.ContextChanged += Context;
+            if (vehicle is IAnalysisContextSource vehicleContext) vehicleContext.ContextChanged += Context;
             worker = SendAsync(hub, registration, events.Reader, lifetime.Token);
         }
         finally { lifecycle.Release(); }
     }
     private void Receive(SensorReading reading) => Enqueue(new(reading with { Values = reading.Values.ToArray() }));
+    private void Location(LocationObservation value) => Enqueue(new(Location: value));
+    private void Wifi(IReadOnlyList<WifiObservation> values) => Enqueue(new(Wifi: values.ToArray()));
+    private void Bluetooth(IReadOnlyList<BluetoothObservation> values) => Enqueue(new(Bluetooth: values.ToArray()));
+    private void Context(AnalysisContext value) => Enqueue(new(Context: value));
     private void State(SensorState state) => Enqueue(new(State: state));
     private void Enqueue(TelemetryEvent value)
     {
-        if (events?.Writer.TryWrite(value) != true) Interlocked.Increment(ref dropped);
+        if (JsonSerializer.SerializeToUtf8Bytes(value).Length > 256 * 1024 || events?.Writer.TryWrite(value) != true) Interlocked.Increment(ref dropped);
     }
     private async Task SendAsync(HubConnection hub, TelemetryRegistration registration, ChannelReader<TelemetryEvent> reader, CancellationToken cancellationToken)
     {
         long sequence = 0;
-        TelemetryBatch? pending = null;
+        TelemetryBatch? pending = null; TelemetryEvent? deferred = null;
         var delay = registration.Mode == TelemetryMode.Research ? 100 : 250;
         try
         {
@@ -74,8 +81,16 @@ public sealed class SensorTelemetryClient(string deviceId, ISensorProvider provi
                 if (pending is null)
                 {
                     var batch = new List<TelemetryEvent>();
-                    while (batch.Count < 256 && reader.TryRead(out var item)) batch.Add(item);
-                    pending = new(registration.SessionId, sequence, DateTimeOffset.UtcNow, batch);
+                                        var size = 0;
+                    while (batch.Count < 256)
+                    {
+                        var item = deferred; deferred = null;
+                        if (item is null && !reader.TryRead(out item)) break;
+                        var itemSize = JsonSerializer.SerializeToUtf8Bytes(item).Length;
+                        if (size + itemSize > 400 * 1024 && batch.Count > 0) { deferred = item; break; }
+                        batch.Add(item); size += itemSize;
+                    }
+                    pending = new(registration.SessionId, sequence, DateTimeOffset.UtcNow, batch, Interlocked.Read(ref dropped));
                 }
                 try
                 {
@@ -102,6 +117,7 @@ public sealed class SensorTelemetryClient(string deviceId, ISensorProvider provi
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+        finally { if (pending is not null) Interlocked.Add(ref dropped, pending.Events.Count); if (deferred is not null) Interlocked.Increment(ref dropped); }
     }
     public async Task DisconnectAsync(CancellationToken cancellationToken = default)
     {
@@ -110,6 +126,8 @@ public sealed class SensorTelemetryClient(string deviceId, ISensorProvider provi
         {
             if (lifetime is null) return;
             provider.ReadingReceived -= Receive; provider.StateChanged -= State;
+            if (observations is not null) { observations.LocationReceived -= Location; observations.WifiReceived -= Wifi; observations.BluetoothReceived -= Bluetooth; } if (analysis is not null) analysis.ContextChanged -= Context;
+            if (vehicle is IAnalysisContextSource vehicleContext) vehicleContext.ContextChanged -= Context;
             lifetime.Cancel();
             if (worker is not null) await worker;
             if (events is not null) while (events.Reader.TryRead(out _)) dropped++;

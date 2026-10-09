@@ -239,11 +239,14 @@
     "number": 18,
     "commitDateUtc": null,
     "description": "Slutvalidering, säkerhet och publicering",
-    "status": "NotStarted",
-    "testResult": "NotRun",
+    "status": "Implemented",
+    "testResult": "Android/Windows solution build: 0 errors, 0 warnings. MSTest: 214 passed, 0 failed/skipped. API/dashboard smoke passed; 32 distribution/security checks passed. TC53: version0.18.0 runtime, 2810 valid accelerometer samples at50.04Hz, explicit stop. Final clean-HEAD metadata check follows commit; field acceptance/production signing NotRun.",
     "name": "Slutvalidering, säkerhet och publicering",
     "verifiedAtUtc": null,
-    "blockers": [],
+    "blockers": [
+      "Oberoende fysisk ground truth saknas; researchmodeller behöver kalibrering och fältprov.",
+      "Produktions-HTTPS-origin och Android/Windows-signering saknas; ingen produktionsrelease publicerad."
+    ],
     "latestCommit": "Unknown"
   }
 ]

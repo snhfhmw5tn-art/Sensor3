@@ -7,8 +7,9 @@
 <p>Uppspelning är lokal beräkning av redan insamlade eller uttryckligen syntetiska data. Webbläsaren samlar inga rörelsesensorer. Export kan innehålla plats och radioidentifierare.</p>
 @if (recorder is not null)
 {
+    <label><input type="checkbox" @bind="confirmStart" /> Bekräfta känd lokal start nedan före inspelning</label><label>X m <input type="number" @bind="startX" /></label><label>Y m <input type="number" @bind="startY" /></label><label>Person-heading rad <input type="number" @bind="startHeading" /></label>
     <label>Sessionsnamn <input @bind="name" /></label><button disabled="@recorder.IsRecording" @onclick="Start">Starta lokal inspelning</button><button disabled="@(!recorder.IsRecording)" @onclick="Stop">Stoppa / öppna inspelningen</button>
-    <p>Inspelade händelser @recorder.FrameCount. Starta sensorer på diagnostiksidan; inspelningen fortsätter i minnet när du återvänder hit, men sidbyte stoppar native-insamlingen. Max 60 000 händelser, därefter tydligt Truncated.</p>
+    <p>Inspelade händelser @recorder.FrameCount. Starta valda native-sensorer i diagnostiken på denna sida. Inspelningen kan fortsätta i minnet över sidbyte, men sidbyte stoppar native-insamlingen. Max 60 000 händelser, därefter tydligt Truncated.</p>
 }
 <label>Syntetiskt scenario <select @bind="scenario">@foreach (var value in Enum.GetValues<SyntheticScenario>()) { <option value="@value">SYNTHETIC @value</option> }</select></label><button @onclick="Generate">Skapa syntetiskt underlag</button>
 <label>Importera Sensor3 JSON/CSV <InputFile OnChange="Import" accept=".json,.csv" /></label>
@@ -25,14 +26,19 @@
         <p>JSON @comparison.JsonBytes byte · beräkning @comparison.ElapsedMilliseconds.ToString("F1") ms · process-CPU @comparison.CpuMilliseconds.ToString("F1") ms · @comparison.Detail</p>
     }
     <p>Modell: @replay.Analysis.Steps.GetActivity().Kind · @replay.Analysis.Steps.GetCarrying().Kind · steg @replay.Analysis.Steps.GetSnapshot().Total · heading @Number(replay.Analysis.Steps.GetHeading().Radians) · @replay.Analysis.Vehicle.GetSnapshot().Detail</p>
-    <LiveIndoorMap Position="replay.Analysis.Steps.GetPosition()" Heading="replay.Analysis.Steps.GetHeading()" StepCount="replay.Analysis.Steps.GetSnapshot().Total" />
+    <LiveIndoorMap Position="ReplayPosition()" Heading="ReplayHeading()" StepCount="replay.Analysis.Steps.GetSnapshot().Total" Truck="replay.Analysis.Steps.IsForkliftDeclared" />
     <details><summary>Lägg till separat ground truth vid aktuell tidslinjepunkt</summary>
         <p>Operatörens oberoende referens, inte modellens eget resultat. Exportera underlaget efter ändring. Angivna värden gäller vid den aktuella händelsen.</p>
         <label>Steg <input type="number" @bind="truthSteps" /></label><label>Distans m <input type="number" @bind="truthDistance" /></label><label>Heading rad <input type="number" @bind="truthHeading" /></label><label>X m <input type="number" @bind="truthX" /></label><label>Y m <input type="number" @bind="truthY" /></label><label>Aktivitet <select @bind="truthActivity">@foreach (var value in Enum.GetValues<ActivityKind>()) { <option value="@value">@value</option> }</select></label><button @onclick="MarkTruth">Sätt uttrycklig ground truth</button>
     </details>
 }
 <p role="status">@message</p>
+@if (recorder is not null) { <SensorDiagnosticsView /> }
 @code {
+    private IHumanHeadingSession? nativeHeading;
+    private INavigationSession? nativePosition;
+    private bool confirmStart;
+    private double startX, startY, startHeading;
     private IRecordingSession? recorder;
     private SensorRecording? recording;
     private ReplaySession? replay;
@@ -47,10 +53,17 @@
     private double playSeconds;
     private System.Threading.Timer? timer;
     private IJSObjectReference? downloads;
-    protected override void OnInitialized() { recorder = Services.GetService(typeof(IRecordingSession)) as IRecordingSession; timer = new(_ => { _ = Tick(); }, null, 100, 100); }
+    protected override void OnInitialized() { nativeHeading = Services.GetService(typeof(IHumanHeadingSession)) as IHumanHeadingSession; nativePosition = Services.GetService(typeof(INavigationSession)) as INavigationSession; recorder = Services.GetService(typeof(IRecordingSession)) as IRecordingSession; timer = new(_ => { _ = Tick(); }, null, 100, 100); }
+    private PositionSnapshot ReplayPosition()
+    {
+        var pdr = replay!.Analysis.Steps.GetPosition(); if (!replay!.Analysis.Steps.IsForkliftDeclared) return pdr;
+        var v = replay.Analysis.Vehicle.GetSnapshot();
+        return new(v.Position,pdr.WalkingMeters,pdr.RunningMeters,v.SpeedMetersPerSecond,v.AccuracyMeters ?? 0,v.Confidence,v.Position is { } point ? new[] { point } : [],v.Detail,v.Position);
+    }
+    private HumanHeading ReplayHeading() { var v = replay!.Analysis.Vehicle.GetSnapshot(); return replay!.Analysis.Steps.IsForkliftDeclared ? new(v.CourseRadians,v.Confidence,Math.PI,"GPS course",v.Detail) : replay.Analysis.Steps.GetHeading(); }
     private static string Number(double? number) => number?.ToString("F3") ?? "Unknown";
     private void Load(SensorRecording value) { Pause(); replay?.Dispose(); recording = value; replay = new(value); comparison = replay.Compare(); }
-    private async Task Start() { try { await recorder!.StartAsync(name); message = "Inspelning startad. Insamling startas i diagnostiken."; } catch (Exception e) when (e is ArgumentException or InvalidOperationException) { message = e.Message; } }
+    private async Task Start() { try { if (confirmStart) { nativeHeading!.SetKnownStartHeading(startHeading); nativePosition!.SetStartPosition(startX,startY); } await recorder!.StartAsync(name); message = "Inspelning startad. Insamling startas i diagnostiken."; } catch (Exception e) when (e is ArgumentException or InvalidOperationException) { message = e.Message; } }
     private void Stop() { try { Load(recorder!.Stop()); } catch (InvalidOperationException e) { message = e.Message; } }
     private void Generate() => Load(SyntheticScenarios.Create(scenario));
     private async Task Import(InputFileChangeEventArgs args)

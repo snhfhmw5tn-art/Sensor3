@@ -51,6 +51,7 @@ public sealed class PedestrianPositionEstimator
         uncertainty = Math.Max(observation.UncertaintyMeters, uncertainty * (1 - weight));
         path.Add(position); if (path.Count > 4000) path.RemoveAt(0);
     }
+    public void UpdateActivity(ActivityEstimate activity, double seconds) { if (activity.Stable && activity.Kind == ActivityKind.Stationary) speed = 0; else if (!activity.Stable || activity.Kind is not (ActivityKind.Walking or ActivityKind.Running) || seconds - lastSeconds > 2) speed = null; }
     public void Stop() { speed = null; confidence = 0; }
     public PositionSnapshot Snapshot() => new(position, walking, running, speed, uncertainty, confidence, path.ToArray(),
         "Weinberg-baseline: K × amplitud^¼. Kalibrera per person/tempo. Utan riktning hålls XY; osäkerheten växer. Radien är ett heuristiskt mått, inte ett statistiskt konfidensintervall.", rawPosition, rawPath.ToArray());

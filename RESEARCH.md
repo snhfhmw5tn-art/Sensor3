@@ -22,3 +22,7 @@ Stegdetektering porterades från verklig Sensor App 2-kod; se [iteration 08](doc
 ## Bevisnivå
 
 Implemented betyder att kod, bygge och angivna regressionstester finns. Verified kräver acceptanskriterier på verkliga Android-/Windows-enheter, med märkt ground truth. Released kräver separat signering, installations-/uppgraderingstest och kontrollerad publicering. Simulering tillhör aldrig fältverifiering. Alla dokumenterade standardparametrar är experimentella och måste kalibreras mot det aktuella användningsfallet.
+
+## Position, radio och slutlig integration (13–18)
+
+Steglängd använder en begränsad Weinberg-liknande amplitudmodell med personkalibrering, radio en explicit referenskarta/WKNN-baseline och kartmatchning ett förenklat partikelfilter. Primärkällor, parametrar och skillnader mot publikationernas algoritmer finns i ALGORITHMS.md. Ingen publicerad noggrannhet överförs till denna implementation. VALIDATION.md redovisar syntetiska resultat inklusive missade armsteg, och KNOWN_LIMITATIONS.md beskriver återstående fältprov.

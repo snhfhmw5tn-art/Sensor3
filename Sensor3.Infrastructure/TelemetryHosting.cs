@@ -99,6 +99,7 @@ public static class TelemetryHosting
         builder.Services.AddAuthorization();
         builder.Services.AddSignalR(x => { x.MaximumReceiveMessageSize = 1024 * 1024; x.MaximumParallelInvocationsPerClient = 1; });
         builder.Services.AddSingleton<TelemetryRegistry>();
+        builder.Services.AddSingleton<IRealtimeAnalysisSource>(x => x.GetRequiredService<TelemetryRegistry>());
         builder.Services.AddSingleton<IRealtimeDiagnosticsSource>(x => x.GetRequiredService<TelemetryRegistry>());
         builder.Services.AddSingleton<TelemetryQueue>(); builder.Services.AddHostedService<TelemetryProcessor>();
     }
@@ -112,6 +113,7 @@ public static class TelemetryHosting
         });
         app.MapHub<TelemetryHub>("/hubs/sensors");
         app.MapGet("/api/telemetry/sessions", (TelemetryRegistry registry) => registry.GetSessions()).RequireAuthorization(x => x.RequireRole("ReleaseAdministrator"));
+        app.MapGet("/api/telemetry/sessions/{id:guid}/analysis", (Guid id, TelemetryRegistry registry) => registry.GetAnalysis(id)).RequireAuthorization(x => x.RequireRole("ReleaseAdministrator"));
         app.MapGet("/api/telemetry/sessions/{id:guid}", (Guid id, TelemetryRegistry registry) => registry.GetDiagnostics(id)).RequireAuthorization(x => x.RequireRole("ReleaseAdministrator"));
     }
 }

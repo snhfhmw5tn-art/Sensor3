@@ -76,7 +76,7 @@ public static class MauiProgram
             Preferences.Default.Get("TelemetryDeviceId", InitializeDeviceId()),
             x.GetRequiredService<Sensor3.Contracts.ISensorProvider>(), x.GetRequiredService<Sensor3.Sensors.SensorDiagnosticsStore>(),
             x.GetRequiredService<Sensor3.Contracts.BuildInfo>(), x.GetRequiredService<IReadOnlyList<Sensor3.Contracts.IterationInfo>>(),
-            x.GetRequiredService<ILogger<Sensor3.Sensors.SensorTelemetryClient>>()));
+            x.GetRequiredService<ILogger<Sensor3.Sensors.SensorTelemetryClient>>(), x.GetRequiredService<Sensor3.Contracts.NativeObservationBus>(), x.GetRequiredService<Sensor3.Core.StepSession>(), x.GetRequiredService<Sensor3.Contracts.IForkliftMotionEstimator>()));
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();
         builder.Logging.AddDebug();

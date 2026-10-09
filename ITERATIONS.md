@@ -1,6 +1,6 @@
 # Iterationshistorik
 
-Version 0.17.0. Implementerade: 17/18. Verifierade: 0/18. Publicerade: 0/18.
+Version 0.18.0. Implementerade: 18/18. Verifierade: 0/18. Publicerade: 0/18.
 
 | Nr | Namn | Status | Rapport |
 |---|---|---|---|
@@ -21,7 +21,7 @@ Version 0.17.0. Implementerade: 17/18. Verifierade: 0/18. Publicerade: 0/18.
 | 15 | WiFi- och BLE-positionering | Implemented | [Rapport](docs/iteration-15.md) |
 | 16 | Lagerkarta och kartmatchning | Implemented | [Rapport](docs/iteration-16.md) |
 | 17 | Inspelning, simulering och jämförelse | Implemented | [Rapport](docs/iteration-17.md) |
-| 18 | Slutvalidering, säkerhet och publicering | NotStarted | Återstår |
+| 18 | Slutvalidering, säkerhet och publicering | Implemented | [Rapport](docs/iteration-18.md) |
 
 Verified kräver dokumenterade acceptanskriterier på verklig hårdvara. Released kräver separat signerings-, installations- och publiceringsbevis. Simulering räknas inte som fältvalidering.
 

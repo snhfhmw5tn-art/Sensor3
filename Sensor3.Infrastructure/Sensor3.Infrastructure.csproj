@@ -1,6 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\Sensor3.Core\Sensor3.Core.csproj" />
     <ProjectReference Include="..\Sensor3.Contracts\Sensor3.Contracts.csproj" />
     <ProjectReference Include="..\Sensor3.Sensors\Sensor3.Sensors.csproj" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />

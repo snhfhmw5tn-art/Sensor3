@@ -8,3 +8,6 @@ artifacts/
 *.private.pem
 *.key
 
+
+**/TestResults/
+recordings/

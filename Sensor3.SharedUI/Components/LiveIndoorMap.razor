@@ -6,13 +6,13 @@
     <label><input type="checkbox" @bind="follow" /> Auto Follow</label>
     <button @onclick="() => scale = Math.Min(80, scale * 1.5)">Zoom +</button><button @onclick="() => scale = Math.Max(2, scale / 1.5)">Zoom −</button>
     <button @onclick="() => Pan(-5, 0)">← 5 m</button><button @onclick="() => Pan(5, 0)">→ 5 m</button><button @onclick="() => Pan(0, 5)">↑ 5 m</button><button @onclick="() => Pan(0, -5)">↓ 5 m</button>
-    <p>Blå: rå PDR · grön: radiokorrigerad · lila: kartmatchad · orange: osäkerhetsradie. X→, Y↑. @StepCount steg · fart @(Position?.SpeedMetersPerSecond?.ToString("F2") ?? "Unknown") m/s · riktning @(Heading?.Radians?.ToString("F2") ?? "Unknown") rad</p>
+    <p>Blå: rå PDR · grön: radiokorrigerad · lila: kartmatchad · orange: osäkerhetsradie. X→, Y↑. @StepCount steg · fart @(Position?.SpeedMetersPerSecond?.ToString("F2") ?? "Unknown") m/s · riktning @(Heading?.Confidence > 0 ? Heading.Radians?.ToString("F2") ?? "Unknown" : "Unknown") rad</p>
     <svg viewBox="0 0 600 400" role="img" aria-label="Lokal XY-karta med metergradering, råspår och kartmatchning" style="width:100%;max-width:900px;background:#fafafa;border:1px solid #777">
         @for (var i = -150; i <= 150; i++)
         {
             var gx = Math.Floor(center.X) + i; var gy = Math.Floor(center.Y) + i;
-            if (X(gx) is >= 0 and <= 600) { <line x1="@F(X(gx))" y1="0" x2="@F(X(gx))" y2="400" stroke="@(gx % 10 == 0 ? "#999" : gx % 5 == 0 ? "#ccc" : "#eee")" /><g><text x="@F(X(gx))" y="390" font-size="10">@gx m</text></g> }
-            if (Y(gy) is >= 0 and <= 400) { <line x1="0" y1="@F(Y(gy))" x2="600" y2="@F(Y(gy))" stroke="@(gy % 10 == 0 ? "#999" : gy % 5 == 0 ? "#ccc" : "#eee")" /><g><text x="2" y="@F(Y(gy))" font-size="10">@gy m</text></g> }
+            if (X(gx) is >= 0 and <= 600) { <line x1="@F(X(gx))" y1="0" x2="@F(X(gx))" y2="400" stroke="@(gx % 10 == 0 ? "#999" : gx % 5 == 0 ? "#ccc" : "#eee")" /><g style="@(gx % 5 == 0 ? "" : "display:none")"><text x="@F(X(gx))" y="390" font-size="10">@gx m</text></g> }
+            if (Y(gy) is >= 0 and <= 400) { <line x1="0" y1="@F(Y(gy))" x2="600" y2="@F(Y(gy))" stroke="@(gy % 10 == 0 ? "#999" : gy % 5 == 0 ? "#ccc" : "#eee")" /><g style="@(gy % 5 == 0 ? "" : "display:none")"><text x="2" y="@F(Y(gy))" font-size="10">@gy m</text></g> }
         }
         @foreach (var feature in map.Features)
         {
@@ -20,8 +20,8 @@
             else if (feature.Kind == MapFeatureKind.Anchor) { <circle cx="@F(X(feature.A.X))" cy="@F(Y(feature.A.Y))" r="4" fill="black"><title>@feature.Name</title></circle> }
             else { <line x1="@F(X(feature.A.X))" y1="@F(Y(feature.A.Y))" x2="@F(X(feature.B.X))" y2="@F(Y(feature.B.Y))" stroke="@(feature.Kind == MapFeatureKind.Wall ? "black" : feature.Kind == MapFeatureKind.Aisle ? "#a6cdad" : "#afbbdf")" stroke-width="@(feature.Kind == MapFeatureKind.Wall ? 3 : 8)"><title>@feature.Name</title></line> }
         }
-        <polyline points="@Points(Position?.RawPath ?? [])" fill="none" stroke="#2868d8" stroke-width="2" />
-        <polyline points="@Points(Position?.Path ?? [])" fill="none" stroke="#00854a" stroke-width="2" />
+        <polyline points="@Points(Position?.RawPath ?? [])" fill="none" stroke="#2868d8" stroke-width="3" />
+        <polyline points="@Points(Position?.Path ?? [])" fill="none" stroke="#00854a" stroke-width="1.5" />
         <polyline points="@Points(matchedPath)" fill="none" stroke="#8b3bb4" stroke-width="2" />
         @if (Position?.Path.FirstOrDefault() is { } start) { <circle cx="@F(X(start.X))" cy="@F(Y(start.Y))" r="5" fill="white" stroke="black"><title>Startpunkt</title></circle> }
         @if (Position?.Position is { } point)
@@ -39,7 +39,7 @@
     <details><summary>Frivillig Google Maps-referens</summary>
         <p>Lokal (0,0) måste kalibreras till lat/lon samt bäring för lokal +Y. Google-vyn visar kalibrerad position; lagergeometrin visas i den lokala kartan ovan. När vyn aktiveras skickas koordinater till Google. API-nyckel med Maps Embed aktiverad krävs och sparas inte.</p>
         <label>Origin lat <input type="number" @bind="latitude" /></label><label>lon <input type="number" @bind="longitude" /></label><label>+Y bäring ° <input type="number" @bind="bearing" /></label><label>API-nyckel <input type="password" @bind="key" /></label><button @onclick="ShowGoogle">Aktivera kalibrerad Google-vy</button><button @onclick="() => googleUrl = null">Stäng Google-vy</button>
-        @if (googleUrl is not null) { <iframe title="Kalibrerad Google Maps-position" src="@googleUrl" width="600" height="400" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe> }
+        @if (googleUrl is not null) { <iframe title="Kalibrerad Google Maps-position" src="@googleUrl" width="600" height="400" style="width:100%;max-width:600px" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe> }
     </details>
 </section>
 @code {

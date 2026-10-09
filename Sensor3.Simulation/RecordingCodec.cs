@@ -9,7 +9,7 @@ public static class RecordingCodec
     private static readonly JsonSerializerOptions Options = new() { PropertyNameCaseInsensitive = true };
     public static void Validate(SensorRecording recording)
     {
-        if (recording.Schema != 1 || string.IsNullOrWhiteSpace(recording.Name) || recording.Name.Length > 120 || recording.Frames is null || recording.Frames.Count > 60000 || recording.Catalogue is null || recording.Catalogue.Count > 256
+        if (recording.StartedAtUtc.Year is < 1990 or > 2100 || recording.Schema != 1 || string.IsNullOrWhiteSpace(recording.Name) || recording.Name.Length > 120 || recording.Frames is null || recording.Frames.Count > 60000 || recording.Catalogue is null || recording.Catalogue.Count > 256
             || recording.Catalogue.Any(x => x is null || string.IsNullOrWhiteSpace(x.Id) || x.Id.Length > 256 || !Enum.IsDefined(x.Kind)) || recording.Catalogue.Select(x => x.Id).Distinct().Count() != recording.Catalogue.Count || !Enum.IsDefined(recording.DeclaredCarrying) || recording.KnownStartHeading is { } h && !double.IsFinite(h) || recording.StartPosition is { } p && (!double.IsFinite(p.X) || !double.IsFinite(p.Y))) throw new InvalidDataException("Ogiltig inspelningsmetadata.");
         if (recording.RadioMap is { } map) Sensor3.Positioning.RadioFingerprintEstimator.Validate(map);
         double last = -1;

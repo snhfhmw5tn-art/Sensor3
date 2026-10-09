@@ -9,20 +9,22 @@ public sealed class RadioPositionSession : IRadioPositionSession, IDisposable
     private readonly INavigationSession navigation;
     private readonly RadioFingerprintEstimator estimator;
     private readonly string? storagePath;
+    private readonly TimeProvider clock;
+    private DateTimeOffset resultAt;
     private RadioMap map = new([], []);
     private IReadOnlyList<WifiObservation> latestWifi = [];
     private RadioPosition result = new(null, 0, 0, "Unknown", "Registrera kända punkter och skanna.");
     public RadioPositionSession(NativeObservationBus bus, INavigationSession navigation, string? storagePath = null, TimeProvider? timeProvider = null)
     {
-        estimator = new(timeProvider: timeProvider); this.bus = bus; this.navigation = navigation; this.storagePath = storagePath;
+        clock = timeProvider ?? TimeProvider.System; estimator = new(timeProvider: clock); this.bus = bus; this.navigation = navigation; this.storagePath = storagePath;
         if (storagePath is not null && File.Exists(storagePath))
         { try { ImportMap(File.ReadAllText(storagePath)); } catch (Exception e) when (e is IOException or JsonException) { result = new(null, 0, 0, "Unknown", "Sparad radiokarta kunde inte läsas. Importera en giltig karta."); } }
         bus.WifiReceived += Wifi; bus.BluetoothReceived += Bluetooth;
     }
-    private void Wifi(IReadOnlyList<WifiObservation> values) { lock (gate) { latestWifi = values.ToArray(); result = estimator.Wifi(map, values); Correct(); } }
-    private void Bluetooth(IReadOnlyList<BluetoothObservation> values) { lock (gate) { result = estimator.Bluetooth(map, values); Correct(); } }
+    private void Wifi(IReadOnlyList<WifiObservation> values) { lock (gate) { latestWifi = values.ToArray(); result = estimator.Wifi(map, values); resultAt = clock.GetUtcNow(); Correct(); } }
+    private void Bluetooth(IReadOnlyList<BluetoothObservation> values) { lock (gate) { result = estimator.Bluetooth(map, values); resultAt = clock.GetUtcNow(); Correct(); } }
     private void Correct() { if (result.Point is not null && result.Confidence > 0) navigation.CorrectPosition(result); }
-    public RadioPosition GetRadioPosition() { lock (gate) return result; }
+    public RadioPosition GetRadioPosition() { lock (gate) return result.Point is not null && clock.GetUtcNow() - resultAt > TimeSpan.FromSeconds(30) ? result with { Confidence = 0, Detail = "Unknown: ingen aktuell radioobservation. XY är historisk." } : result; }
     public void RegisterWifiPoint(double x, double y)
     {
         lock (gate)

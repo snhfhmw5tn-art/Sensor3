@@ -55,9 +55,9 @@ public sealed class ReplaySession : IDisposable
     public ComparisonResult Compare()
     {
         var steps = Analysis.Steps.GetSnapshot(); var pdr = Analysis.Steps.GetPosition(); var heading = Analysis.Steps.GetHeading(); var vehicle = Analysis.Vehicle.GetSnapshot();
-        var estimatedPosition = recording.DeclaredForklift ? vehicle.Position : pdr.Position;
-        var distance = recording.DeclaredForklift ? vehicle.DistanceMeters : pdr.WalkingMeters + pdr.RunningMeters;
-        var estimatedHeading = recording.DeclaredForklift ? vehicle.CourseRadians : heading.Confidence > 0 ? heading.Radians : null;
+        var estimatedPosition = Analysis.Steps.IsForkliftDeclared ? vehicle.Position : pdr.Position;
+        var distance = Analysis.Steps.IsForkliftDeclared ? vehicle.DistanceMeters : pdr.WalkingMeters + pdr.RunningMeters;
+        var estimatedHeading = Analysis.Steps.IsForkliftDeclared ? vehicle.CourseRadians : heading.Confidence > 0 ? heading.Radians : null;
         return new(truth?.Steps is { } expectedSteps ? steps.Total - expectedSteps : null,
             truth?.DistanceMeters is { } expectedDistance ? distance - expectedDistance : null,
             truth?.HeadingRadians is { } expectedHeading && estimatedHeading is { } h ? Math.Atan2(Math.Sin(h - expectedHeading), Math.Cos(h - expectedHeading)) : null,

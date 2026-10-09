@@ -8,5 +8,6 @@ public interface IStepSession
 {
     void Configure(IReadOnlyList<SensorDescriptor> selected);
     StepSnapshot GetSnapshot();
+    bool UsesSensorForPositioning(string sensorId);
     void Reset();
 }

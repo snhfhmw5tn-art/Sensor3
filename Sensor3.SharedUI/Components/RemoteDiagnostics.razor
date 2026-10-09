@@ -10,7 +10,19 @@
         {
             <p>@native.Id (@native.Platform) · klientversion @native.Build.ApplicationVersion · commit @native.Build.GitCommitHash · iteration @native.Build.LatestImplementedIteration · klientrapporterad verifierad @native.Build.LatestVerifiedIteration</p>
             @if (sessions.FirstOrDefault(x => x.SessionId.ToString() == selected) is { } current)
-            { <p>Paket @current.Statistics.Packets · JSON-byte @current.Statistics.PayloadBytes · saknade paket @current.Statistics.MissingPackets · @current.Statistics.PacketsPerSecond.ToString("F1") paket/s</p> }
+            { <p>Paket @current.Statistics.Packets · JSON-byte @current.Statistics.PayloadBytes · saknade paket @current.Statistics.MissingPackets · klientrapporterat tappade händelser @(current.Statistics.DroppedEvents?.ToString() ?? "Unknown") · @current.Statistics.PacketsPerSecond.ToString("F1") paket/s</p> }
+            @if (derived is not null)
+            {
+                <h3>Beräkning på servern för vald native-session</h3>
+                <p>Steg @derived.Steps.Total · aktivitet @derived.Activity.Kind · carry @derived.Carrying.Kind · personriktning @(derived.Heading.Confidence > 0 ? derived.Heading.Radians?.ToString("F2") : "Unknown") rad · telefonpose @derived.Fusion.Detail</p>
+                <p>Gång @derived.Position.WalkingMeters.ToString("F2") m · löpning @derived.Position.RunningMeters.ToString("F2") m · truck @derived.Vehicle.DistanceMeters.ToString("F2") m · @derived.Radio.Source: @derived.Radio.Detail</p>
+                <LiveIndoorMap Position="MapPosition()" Heading="MapHeading()" StepCount="derived.Steps.Total" Truck="@(derived.Activity.Kind == ActivityKind.Forklift)" />
+                <details><summary>Referenser för denna server-session (operatörsuppgifter)</summary>
+                    <label>Start X m <input type="number" @bind="startX" /></label><label>Y m <input type="number" @bind="startY" /></label><label>Heading rad <input type="number" @bind="startHeading" /></label><button @onclick="Anchor">Bekräfta lokal referens</button>
+                    <label>GPS-origin lat <input type="number" @bind="gpsLatitude" /></label><label>lon <input type="number" @bind="gpsLongitude" /></label><button @onclick="GpsAnchor">Bekräfta GPS-origin</button>
+                    <textarea @bind="radioJson" rows="4" aria-label="Radiokarta för vald server-session"></textarea><button @onclick="ImportRadio">Importera radiokarta för denna session</button><p role="status">@analysisMessage</p>
+                </details>
+            }
             @foreach (var sensor in snapshot.Sensors)
             {
                 <article><h3>@sensor.Descriptor.Name</h3><p>@sensor.Descriptor.Vendor · @sensor.Descriptor.Kind · @sensor.Status · faktisk Hz @(sensor.ActualFrequencyHz?.ToString("F1") ?? "Unknown") · prov @sensor.Count · @sensor.Error</p>
@@ -24,7 +36,19 @@
     </section>
 }
 @code {
+    private PositionSnapshot MapPosition()
+    {
+        var pdr = derived!.Position;
+        if (derived.Activity.Kind != ActivityKind.Forklift) return pdr;
+        var v = derived.Vehicle;
+        return new(v.Position, pdr.WalkingMeters, pdr.RunningMeters, v.SpeedMetersPerSecond, v.AccuracyMeters ?? 0, v.Confidence, v.Position is { } point ? new[] { point } : [], v.Detail, v.Position);
+    }
+    private HumanHeading MapHeading() => derived!.Activity.Kind == ActivityKind.Forklift ? new(derived.Vehicle.CourseRadians, derived.Vehicle.Confidence, Math.PI, "GPS course", derived.Vehicle.Detail) : derived.Heading;
     private IRealtimeDiagnosticsSource? source;
+    private IRealtimeAnalysisSource? analysis;
+    private RemoteAnalysisSnapshot? derived;
+    private double startX, startY, startHeading, gpsLatitude, gpsLongitude;
+    private string radioJson = "", analysisMessage = "";
     private IReadOnlyList<TelemetrySessionSummary> sessions = [];
     private SensorDiagnosticsSnapshot? snapshot;
     private string selected = "";
@@ -33,6 +57,7 @@
     protected override async Task OnInitializedAsync()
     {
         source = Services.GetService(typeof(IRealtimeDiagnosticsSource)) as IRealtimeDiagnosticsSource;
+        analysis = Services.GetService(typeof(IRealtimeAnalysisSource)) as IRealtimeAnalysisSource;
         var authentication = Services.GetService(typeof(AuthenticationStateProvider)) as AuthenticationStateProvider;
         authorized = authentication is not null && (await authentication.GetAuthenticationStateAsync()).User.IsInRole("ReleaseAdministrator");
         if (source is not null && authorized) timer = new(_ => { _ = Refresh(); }, null, 0, 250);
@@ -40,9 +65,18 @@
     private async Task Refresh()
     {
         if (disposed) return;
-        try { await InvokeAsync(() => { if (!disposed) { sessions = source!.GetSessions(); snapshot = Guid.TryParse(selected, out var id) ? source.GetDiagnostics(id) : null; StateHasChanged(); } }); }
+        try { await InvokeAsync(() => { if (!disposed) { sessions = source!.GetSessions(); snapshot = Guid.TryParse(selected, out var id) ? source.GetDiagnostics(id) : null; derived = Guid.TryParse(selected, out id) ? analysis?.GetAnalysis(id) : null; StateHasChanged(); } }); }
         catch (ObjectDisposedException) when (disposed) { }
         catch (TaskCanceledException) when (disposed) { }
     }
+    private void Configure(Action<Guid> action)
+    {
+        if (!authorized || !Guid.TryParse(selected, out var id) || analysis is null) return;
+        try { action(id); analysisMessage = "Referens ändrad endast för vald session."; }
+        catch (Exception e) when (e is ArgumentException or InvalidOperationException or System.IO.IOException or System.Text.Json.JsonException) { analysisMessage = e.Message; }
+    }
+    private void Anchor() => Configure(id => analysis!.ConfigureAnalysis(id, new(KnownStartHeading: startHeading, StartPosition: new(startX,startY))));
+    private void GpsAnchor() => Configure(id => analysis!.ConfigureAnalysis(id, new(GpsOrigin: new(gpsLongitude,gpsLatitude))));
+    private void ImportRadio() => Configure(id => analysis!.ConfigureRadioMap(id, radioJson));
     public void Dispose() { disposed = true; timer?.Dispose(); }
 }

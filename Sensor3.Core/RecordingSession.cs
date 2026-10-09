@@ -18,18 +18,18 @@ public sealed class RecordingSession : IRecordingSession, IDisposable
     public bool IsRecording { get { lock (gate) return active; } }
     public int FrameCount { get { lock (gate) return frames.Count; } }
     public RecordingSession(ISensorProvider provider, NativeObservationBus bus, StepSession session, UpdateSessionGuard guard, IForkliftMotionEstimator vehicle, IRadioPositionSession radio)
-    { this.guard = guard; this.vehicle = vehicle; this.radio = radio; this.provider = provider; this.bus = bus; this.session = session; provider.ReadingReceived += Reading; provider.StateChanged += State; bus.LocationReceived += Location; bus.WifiReceived += Wifi; bus.BluetoothReceived += Bluetooth; }
+    { this.guard = guard; this.vehicle = vehicle; this.radio = radio; this.provider = provider; this.bus = bus; this.session = session; provider.ReadingReceived += Reading; provider.StateChanged += State; bus.LocationReceived += Location; bus.WifiReceived += Wifi; bus.BluetoothReceived += Bluetooth; session.ContextChanged += Context; if (vehicle is IAnalysisContextSource vehicleContext) vehicleContext.ContextChanged += Context; }
     public async Task StartAsync(string name, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(name) || name.Length > 120) throw new ArgumentException("Ange ett sessionsnamn, max 120 tecken.");
         var catalogue = await provider.DiscoverAsync(cancellationToken);
+        var heading = session.GetHeading(); var startPosition = session.GetPosition().Position; var truck = session.IsForkliftDeclared; var carrying = session.DeclaredCarrying; var gps = vehicle.GetGpsOrigin(); var map = System.Text.Json.JsonSerializer.Deserialize<RadioMap>(radio.ExportMap());
         lock (gate)
         {
             if (active) throw new InvalidOperationException("Inspelning pågår.");
-            var heading = session.GetHeading();
             lease = guard.BeginSession();
             recording = new(1, name, false, DateTimeOffset.UtcNow, catalogue, [], false, heading.Confidence > 0 ? heading.Radians : null,
-                session.GetPosition().Position, session.IsForkliftDeclared, session.DeclaredCarrying, vehicle.GetGpsOrigin(), System.Text.Json.JsonSerializer.Deserialize<RadioMap>(radio.ExportMap()));
+                startPosition, truck, carrying, gps, map);
             frames.Clear(); recordedBytes = 0; truncated = false; started = Stopwatch.GetTimestamp(); active = true;
         }
     }
@@ -39,10 +39,11 @@ public sealed class RecordingSession : IRecordingSession, IDisposable
             if (frames.Count >= 60000 || recordedBytes + size > 8_000_000) { truncated = true; active = false; lease?.Dispose(); lease = null; return; } recordedBytes += size; frames.Add(new(Stopwatch.GetElapsedTime(started).TotalSeconds, value)); }
     }
     private void Reading(SensorReading value) => Append(new(value with { Values = value.Values.ToArray() }));
+    private void Context(AnalysisContext value) => Append(new(Context: value));
     private void State(SensorState value) => Append(new(State: value));
     private void Location(LocationObservation value) => Append(new(Location: value));
     private void Wifi(IReadOnlyList<WifiObservation> value) => Append(new(Wifi: value.ToArray()));
     private void Bluetooth(IReadOnlyList<BluetoothObservation> value) => Append(new(Bluetooth: value.ToArray()));
     public SensorRecording Stop() { lock (gate) { active = false; lease?.Dispose(); lease = null; return (recording ?? throw new InvalidOperationException("Ingen inspelning finns.")) with { Frames = frames.ToArray(), Truncated = truncated }; } }
-    public void Dispose() { lock (gate) { active = false; lease?.Dispose(); lease = null; } provider.ReadingReceived -= Reading; provider.StateChanged -= State; bus.LocationReceived -= Location; bus.WifiReceived -= Wifi; bus.BluetoothReceived -= Bluetooth; }
+    public void Dispose() { lock (gate) { active = false; lease?.Dispose(); lease = null; } provider.ReadingReceived -= Reading; provider.StateChanged -= State; bus.LocationReceived -= Location; bus.WifiReceived -= Wifi; bus.BluetoothReceived -= Bluetooth; session.ContextChanged -= Context; if (vehicle is IAnalysisContextSource vehicleContext) vehicleContext.ContextChanged -= Context; }
 }
