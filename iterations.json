@@ -59,7 +59,7 @@
   },
   {
     "number": 5,
-    "commitDateUtc": null,
+    "commitDateUtc": "2026-10-09T14:28:14.0000000+00:00",
     "description": "Komplett sensordiagnostik",
     "status": "Implemented",
     "testResult": "116 passed, 0 failed, 0 skipped (MSTest, including Razor rendering); Android + Windows VS MSBuild: 0 errors/warnings; 32 HTTP distribution checks and diagnostics browser boundary passed; native Windows diagnostic UI/discovery passed with 15 unsupported sensors; hardware sensor streaming NotRun",
@@ -70,7 +70,7 @@
       "Windows device exposes no sensors; real-time hardware graphs, stale recovery and filter output NotRun",
       "Native-to-dashboard network transport belongs to iteration 07"
     ],
-    "latestCommit": "Unknown"
+    "latestCommit": "4d329abe356b5d537d8047a023aea4d71c1236d1"
   },
   {
     "number": 6,
