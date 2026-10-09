@@ -1,0 +1,29 @@
+@implements IDisposable
+@using Sensor3.Contracts
+@inject IServiceProvider Services
+@if (session is not null)
+{
+    <section><h2>Aktivitetsigenkänning</h2>
+        <label>Operatörsuppgift <select value="@(session.IsForkliftDeclared ? "forklift" : "auto")" @onchange="Vehicle"><option value="auto">Automatisk baseline</option><option value="forklift">Jag kör truck (deklarerat)</option></select></label>
+        <p>@activity?.Kind · kandidat @activity?.Candidate · stabil @activity?.Stable · kvalitet @activity?.Confidence.ToString("F2")</p>
+        <p>@activity?.Explanation</p>
+        @if (features is { } f) { <p>RMS @f.Rms.ToString("F3") m/s² · varians @f.Variance.ToString("F3") · energi @((f.Rms * f.Rms).ToString("F3")) · horisontell energi @f.HorizontalEnergy.ToString("F3") · periodicitet @f.Periodicity.ToString("F2") · dominerande gait-frekvens @f.CadenceHz.ToString("F2") Hz · gyro-RMS @f.GyroRmsRadians.ToString("F3") rad/s · provtakt @f.SampleRateHz.ToString("F1") Hz</p> }
+        <p>Modellen är en reproducerbar regelbaseline. Kvalitet är en heuristisk poäng. Truckklassificering saknar verklig tränings-/valideringsdata.</p>
+    </section>
+}
+@code {
+    private IActivitySession? session;
+    private ActivityEstimate? activity;
+    private GaitFeatures? features;
+    private bool disposed;
+    private System.Threading.Timer? timer;
+    protected override void OnInitialized() { session = Services.GetService(typeof(IActivitySession)) as IActivitySession; if (session is not null) timer = new(_ => { _ = Refresh(); }, null, 0, 250); }
+    private void Vehicle(ChangeEventArgs args) => session!.SetDeclaredForklift(args.Value?.ToString() == "forklift");
+    private async Task Refresh()
+    {
+        if (disposed) return;
+        try { await InvokeAsync(() => { if (!disposed) { activity = session!.GetActivity(); features = session.GetActivityFeatures(); StateHasChanged(); } }); }
+        catch (ObjectDisposedException) when (disposed) { } catch (TaskCanceledException) when (disposed) { }
+    }
+    public void Dispose() { disposed = true; timer?.Dispose(); }
+}

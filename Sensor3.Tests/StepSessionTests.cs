@@ -31,6 +31,9 @@ public sealed class StepSessionTests
         var before = session.GetSnapshot(); Assert.IsGreaterThan(10L, before.Total);
         provider.Emit(SensorKind.StepCounter, 10, 999); Assert.AreEqual(before.Total, session.GetSnapshot().Total); Assert.AreEqual(999d, session.GetSnapshot().NativeTotal);
         session.Configure(catalogue); Assert.AreEqual(before.Total, session.GetSnapshot().Total);
+        session.SetDeclaredForklift(true);
+        for (var i = 500; i < 1000; i++) { var wave = Math.Sin(2 * Math.PI * 2 * i * .02); provider.Emit(SensorKind.Accelerometer, i * .02, .6 * wave, 0, 9.80665 + 2 * wave); }
+        Assert.AreEqual(before.Total, session.GetSnapshot().Total); Assert.AreEqual(ActivityKind.Forklift, session.GetActivity().Kind);
         provider.Stop(); Assert.AreEqual(0d, session.GetSnapshot().CadenceHz);
         session.Reset(); Assert.AreEqual(0L, session.GetSnapshot().Total);
     }

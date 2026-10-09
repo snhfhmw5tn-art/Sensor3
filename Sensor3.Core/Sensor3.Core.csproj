@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Sensor3.StepDetection\Sensor3.StepDetection.csproj" />
     <ProjectReference Include="..\Sensor3.SensorFusion\Sensor3.SensorFusion.csproj" />
+    <ProjectReference Include="..\Sensor3.ActivityRecognition\Sensor3.ActivityRecognition.csproj" />
     <ProjectReference Include="..\Sensor3.Contracts\Sensor3.Contracts.csproj" />
   </ItemGroup>
 

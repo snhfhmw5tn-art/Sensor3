@@ -132,11 +132,14 @@
     "number": 10,
     "commitDateUtc": null,
     "description": "Aktivitetsigenkänning",
-    "status": "NotStarted",
-    "testResult": "NotRun",
+    "status": "Implemented",
+    "testResult": "155 passed, 0 failed, 0 skipped; Android + Windows VS MSBuild: 0 errors, 0 warnings; HTTP metadata/browser smoke passed",
     "name": "Aktivitetsigenkänning",
     "verifiedAtUtc": null,
-    "blockers": [],
+    "blockers": [
+      "No measured forklift training/validation dataset",
+      "Physical cross-person/carry-mode classification and confusion matrix pending"
+    ],
     "latestCommit": "Unknown"
   },
   {
