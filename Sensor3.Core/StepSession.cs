@@ -6,7 +6,7 @@ using Sensor3.CarryingMode;
 
 namespace Sensor3.Core;
 
-public sealed class StepSession : IStepSession, ISensorFusionSession, IActivitySession, ICarryingSession, IDisposable
+public sealed class StepSession : IStepSession, ISensorFusionSession, IActivitySession, ICarryingSession, IHumanHeadingSession, IDeviceOrientationEstimator, IDisposable
 {
     private readonly object gate = new();
     private readonly ISensorProvider provider;
@@ -14,6 +14,7 @@ public sealed class StepSession : IStepSession, ISensorFusionSession, IActivityS
     private GaitStepDetector detector;
     private readonly Dictionary<SensorKind, string> sources = [];
     private readonly MotionFusion fusion = new();
+    private readonly IHumanHeadingEstimator humanHeading = new AdaptiveHumanHeadingEstimator();
     private readonly IActivityClassifier classifier;
     private readonly List<StepEvent> pending = [];
     private ActivityContext context = new();
@@ -33,6 +34,7 @@ public sealed class StepSession : IStepSession, ISensorFusionSession, IActivityS
         {
             sources.Clear(); foreach (var group in selected.GroupBy(x => x.Kind)) sources[group.Key] = group.First().Id;
             detector.ResetEvidence(); fusion.ResetEvidence();
+            if (humanHeading.GetHeading().Method != "KnownStart") humanHeading.ResetEvidence();
             this.classifier.Reset(); pending.Clear(); activity = new(ActivityKind.Unknown, ActivityKind.Unknown, 0, false, 0, "Källorna har ändrats; räknartotal behålls.");
             carryingClassifier.Reset(); carryingContext = carryingContext with { LightLux = null, ProximityMeters = null };
         }
@@ -40,6 +42,10 @@ public sealed class StepSession : IStepSession, ISensorFusionSession, IActivityS
     public StepSnapshot GetSnapshot() { lock (gate) return snapshot; }
     public FusionSnapshot GetFusionSnapshot() { lock (gate) return fusion.GetFusionSnapshot(); }
     public void BeginGyroCalibration() { lock (gate) fusion.BeginGyroCalibration(); }
+    public DeviceOrientation? GetDeviceOrientation() { lock (gate) return fusion.GetDeviceOrientation(); }
+    public HumanHeading GetHeading() { lock (gate) return humanHeading.GetHeading(); }
+    public HeadingComparison GetHeadingComparison() { lock (gate) return humanHeading.GetComparison(); }
+    public void SetKnownStartHeading(double radians) { lock (gate) humanHeading.SetKnownStartHeading(radians); }
     public ActivityEstimate GetActivity() { lock (gate) return activity; }
     public GaitFeatures? GetActivityFeatures() { lock (gate) return detector.Features; }
     public bool IsForkliftDeclared { get { lock (gate) return context.DeclaredForklift; } }
@@ -58,7 +64,7 @@ public sealed class StepSession : IStepSession, ISensorFusionSession, IActivityS
         lock (gate)
         {
             if (!sources.TryGetValue(reading.Kind, out var id) || id != reading.SensorId) return;
-            var seconds = reading.MonotonicTimestampNanoseconds / 1e9 ?? reading.TimestampUtc?.ToUnixTimeMilliseconds() / 1000d;
+            var seconds = reading.MonotonicTimestampNanoseconds / 1e9 ?? (reading.TimestampUtc is { } utc ? (utc - DateTimeOffset.UnixEpoch).TotalSeconds : (double?)null);
             if (seconds is not { } time) return;
             if (reading.Kind == SensorKind.StepCounter)
             { snapshot = snapshot with { NativeTotal = reading.Values.FirstOrDefault()?.Value }; return; }
@@ -70,6 +76,7 @@ public sealed class StepSession : IStepSession, ISensorFusionSession, IActivityS
                 motion.FilteredWorldAcceleration.Y, motion.WorldAngularVelocity?.Length ?? 0, motion.Confidence > 0));
             activity = classifier.Update(detector.Features, time, context);
             carrying = carryingClassifier.Update(motion, fusion.GetFusionSnapshot().Orientation, activity, carryingContext);
+            humanHeading.Update(motion, fusion.GetDeviceOrientation(), activity, carrying, detector.Features?.CadenceHz);
             if (activity.Candidate is ActivityKind.Walking or ActivityKind.Running && !context.DeclaredForklift && !carrying.Transition && carrying.Kind is not (CarryingKind.PickingUp or CarryingKind.PuttingAway or CarryingKind.VerticalSwinging)) pending.AddRange(detected);
             else pending.Clear();
             pending.RemoveAll(x => x.Seconds < time - 3);

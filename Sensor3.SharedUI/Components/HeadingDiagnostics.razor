@@ -1,0 +1,34 @@
+@implements IDisposable
+@using Sensor3.Contracts
+@inject IServiceProvider Services
+@if (session is not null)
+{
+    <section><h2>Personens riktning och telefonens riktning</h2>
+        <label>Känd startriktning (grader, 0 = lokal +Y) <input type="number" @bind="startDegrees" /></label><button @onclick="Anchor">Bekräfta startriktning</button>
+        <p>Gå först rakt i den angivna riktningen för gait-kalibrering. Efter sensoravbrott måste riktningen bekräftas igen.</p>
+        <p>Telefon: @Degrees(device?.GetDeviceOrientation()?.DeviceHeadingRadians)° · person: @Degrees(heading?.Radians)° · osäkerhet ±@Degrees(heading?.UncertaintyRadians)° · kvalitet @heading?.Confidence.ToString("F2")</p>
+        <p>@heading?.Method · @heading?.Detail</p>
+        <p>Research-jämförelse: PCA @Degrees(comparison?.PcaRadians)° · gyro-only @Degrees(comparison?.GyroOnlyRadians)° · adaptiv @Degrees(comparison?.AdaptiveRadians)° · anisotropi @comparison?.Anisotropy.ToString("F2") · gait-faskorrelation @comparison?.PhaseCorrelation.ToString("F2")</p>
+        <p role="status">@message</p>
+    </section>
+}
+@code {
+    private IHumanHeadingSession? session;
+    private IDeviceOrientationEstimator? device;
+    private HumanHeading? heading;
+    private HeadingComparison? comparison;
+    private double startDegrees;
+    private string message = "";
+    private bool disposed;
+    private System.Threading.Timer? timer;
+    protected override void OnInitialized() { session = Services.GetService(typeof(IHumanHeadingSession)) as IHumanHeadingSession; device = Services.GetService(typeof(IDeviceOrientationEstimator)) as IDeviceOrientationEstimator; if (session is not null) timer = new(_ => { _ = Refresh(); }, null, 0, 250); }
+    private static string Degrees(double? radians) => radians is { } value ? (value * 180 / Math.PI).ToString("F1") : "Unknown";
+    private void Anchor() { try { session!.SetKnownStartHeading(startDegrees * Math.PI / 180); message = "Startriktning registrerad. Stegräknartotal behålls."; } catch (ArgumentException exception) { message = exception.Message; } }
+    private async Task Refresh()
+    {
+        if (disposed) return;
+        try { await InvokeAsync(() => { if (!disposed) { heading = session!.GetHeading(); comparison = session.GetHeadingComparison(); StateHasChanged(); } }); }
+        catch (ObjectDisposedException) when (disposed) { } catch (TaskCanceledException) when (disposed) { }
+    }
+    public void Dispose() { disposed = true; timer?.Dispose(); }
+}

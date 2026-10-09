@@ -16,7 +16,7 @@ public sealed record FusionOptions
             throw new ArgumentOutOfRangeException(nameof(FusionOptions));
     }
 }
-public sealed class MotionFusion : ISensorFusionSession
+public sealed class MotionFusion : ISensorFusionSession, IDeviceOrientationEstimator
 {
     private readonly FusionOptions options;
     private readonly TimeAlignedVectorBuffer gravity = new(), gyro = new();
@@ -32,6 +32,7 @@ public sealed class MotionFusion : ISensorFusionSession
     private FusionSnapshot snapshot = new(null, null, Vector3D.Zero, null, null, false, "Väntar på IMU.");
     public MotionFusion(FusionOptions? options = null) { this.options = options ?? new(); this.options.Validate(); }
     public FusionSnapshot GetFusionSnapshot() => snapshot;
+    public DeviceOrientation? GetDeviceOrientation() => snapshot.Orientation;
     public void BeginGyroCalibration() { calibrationRequested = true; calibrated = false; quiet.Clear(); gyroNoise = null; }
     public void ResetEvidence()
     {
@@ -43,7 +44,7 @@ public sealed class MotionFusion : ISensorFusionSession
     private static double Channel(SensorReading reading, string name) => reading.Values.FirstOrDefault(x => x.Name == name)?.Value ?? double.NaN;
     public DeviceMotion? Process(SensorReading reading, bool preferLinearAcceleration = false)
     {
-        var seconds = reading.MonotonicTimestampNanoseconds / 1e9 ?? reading.TimestampUtc?.ToUnixTimeMilliseconds() / 1000d;
+        var seconds = reading.MonotonicTimestampNanoseconds / 1e9 ?? (reading.TimestampUtc is { } utc ? (utc - DateTimeOffset.UnixEpoch).TotalSeconds : (double?)null);
         if (seconds is not { } time || !double.IsFinite(time)) return null;
         if (lastTimes.TryGetValue(reading.Kind, out var previousTime) && time <= previousTime) return null;
         var vector = ReadVector(reading);
