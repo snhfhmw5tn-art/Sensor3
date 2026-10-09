@@ -46,6 +46,10 @@ Status kvarstår **Implemented**, inte Verified. Iteration 02 har inte påbörja
 
 ### Komplettering: SDK-sökvägar från IDE
 
+Fortsatt XA5300 ledde till kontroll av Visual Studio-installationens `selectedPackages`: MAUI-grupperna Android, Windows, Blazor och Shared saknas. Dessa deklareras nu i `.vsconfig`. Installation återstår medan Visual Studio körs. .NET SDK-workloads via CLI är installerade sedan tidigare; IDE-komponenterna är ett separat installationskrav.
+
+Användarens SDK/JDK-inställningar har registrerats i 32-bitars registervyn under `HKCU\SOFTWARE\Novell\Mono for Android`, enligt SDK-resolverns implementation. Tidigare värden sparades lokalt i `artifacts/android-settings-before.json`. `_ResolveSdks` med projektets Directory.Build-filer och ANDROID_HOME/JAVA_HOME avstängda hittade båda installationerna och avslutades med kod 0. Design-time Compile för Android passerade också. Detta verifierar SDK-upptäckt utanför projektets reservlösning; XA5300 i IDE är ännu inte bekräftat löst.
+
 Visual Studios felpanel visade fortfarande XA5300 trots korrekt checkout. Sensor3.Mobile tillåter nu lokal omvärdering av AndroidSdkDirectory/JavaSdkDirectory, och ett mål före `_ResolveSdks` använder installerade SDK/JDK i användarens lokala appdatamapp om tillförd sökväg saknar adb/java. Giltiga alternativa installationer behålls. Kontroll med Visual Studios MSBuild, DesignTimeBuild=true och avsiktligt ogiltiga globala SDK/JDK-sökvägar valde rätt lokala installationer och passerade. Hela solutionbygget för Android och Windows avslutades med kod 0.
 
 IDE-inställningssökningen gav inga Android-inställningar. UI-verktygets klick misslyckades med `coordinate input geometry is unavailable`; IDE:s felpanel hade kvar XA5300 vid sista avläsningen. Omstart/omladdning i IDE återstår att kontrollera. Ingen direkt ändring av IDE:s inställningsdialog har verifierats.

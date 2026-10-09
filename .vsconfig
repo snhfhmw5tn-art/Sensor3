@@ -1,6 +1,10 @@
 {
   "version": "1.0",
   "components": [
-    "Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
+    "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+    "Microsoft.VisualStudio.ComponentGroup.Maui.Android",
+    "Microsoft.VisualStudio.ComponentGroup.Maui.Windows",
+    "Microsoft.VisualStudio.ComponentGroup.Maui.Blazor",
+    "Microsoft.VisualStudio.ComponentGroup.Maui.Shared"
   ]
 }
