@@ -3,7 +3,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>14.0</LangVersion>
-    <Version>0.12.0</Version>
+    <Version>0.13.0</Version>
     <!-- Visual Studio may retain older environment variables until restarted. -->
     <AndroidSdkDirectory Condition="'$(AndroidSdkDirectory)' == '' and Exists('$(LocalAppData)\Android\Sdk\platform-tools\adb.exe')">$(LocalAppData)\Android\Sdk</AndroidSdkDirectory>
     <JavaSdkDirectory Condition="'$(JavaSdkDirectory)' == '' and Exists('$(LocalAppData)\Microsoft\Jdk\bin\java.exe')">$(LocalAppData)\Microsoft\Jdk</JavaSdkDirectory>

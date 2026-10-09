@@ -1,6 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\Sensor3.Positioning\Sensor3.Positioning.csproj" />
     <ProjectReference Include="..\Sensor3.StepDetection\Sensor3.StepDetection.csproj" />
     <ProjectReference Include="..\Sensor3.SensorFusion\Sensor3.SensorFusion.csproj" />
     <ProjectReference Include="..\Sensor3.ActivityRecognition\Sensor3.ActivityRecognition.csproj" />

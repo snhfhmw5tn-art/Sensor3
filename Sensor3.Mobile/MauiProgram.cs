@@ -50,6 +50,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<Sensor3.Contracts.IActivitySession>(x => x.GetRequiredService<Sensor3.Core.StepSession>());
         builder.Services.AddSingleton<Sensor3.Contracts.ICarryingSession>(x => x.GetRequiredService<Sensor3.Core.StepSession>());
         builder.Services.AddSingleton<Sensor3.Contracts.IHumanHeadingSession>(x => x.GetRequiredService<Sensor3.Core.StepSession>());
+        builder.Services.AddSingleton<Sensor3.Contracts.INavigationSession>(x => x.GetRequiredService<Sensor3.Core.StepSession>());
         builder.Services.AddSingleton<Sensor3.Contracts.IDeviceOrientationEstimator>(x => x.GetRequiredService<Sensor3.Core.StepSession>());
         builder.Services.AddSingleton<Sensor3.Sensors.SensorDiagnosticsStore>();
         builder.Services.AddSingleton<Sensor3.Contracts.ISensorDiagnosticsReceiver>(x => x.GetRequiredService<Sensor3.Sensors.SensorDiagnosticsStore>());

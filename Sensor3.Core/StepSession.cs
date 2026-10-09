@@ -6,8 +6,10 @@ using Sensor3.CarryingMode;
 
 namespace Sensor3.Core;
 
-public sealed class StepSession : IStepSession, ISensorFusionSession, IActivitySession, ICarryingSession, IHumanHeadingSession, IDeviceOrientationEstimator, IDisposable
+public sealed class StepSession : IStepSession, ISensorFusionSession, IActivitySession, ICarryingSession, IHumanHeadingSession, IDeviceOrientationEstimator, INavigationSession, IDisposable
 {
+    private readonly Sensor3.Positioning.PedestrianPositionEstimator position = new();
+    private readonly List<(double Seconds, HumanHeading Heading)> headings = [];
     private readonly object gate = new();
     private readonly ISensorProvider provider;
     private readonly StepOptions options;
@@ -32,13 +34,15 @@ public sealed class StepSession : IStepSession, ISensorFusionSession, IActivityS
     {
         lock (gate)
         {
-            sources.Clear(); foreach (var group in selected.GroupBy(x => x.Kind)) sources[group.Key] = group.First().Id;
+            headings.Clear(); position.Stop(); sources.Clear(); foreach (var group in selected.GroupBy(x => x.Kind)) sources[group.Key] = group.First().Id;
             detector.ResetEvidence(); fusion.ResetEvidence();
             if (humanHeading.GetHeading().Method != "KnownStart") humanHeading.ResetEvidence();
             this.classifier.Reset(); pending.Clear(); activity = new(ActivityKind.Unknown, ActivityKind.Unknown, 0, false, 0, "Källorna har ändrats; räknartotal behålls.");
             carryingClassifier.Reset(); carryingContext = carryingContext with { LightLux = null, ProximityMeters = null };
         }
     }
+    public PositionSnapshot GetPosition() { lock (gate) return position.Snapshot(); }
+    public void SetStartPosition(double x, double y) { lock (gate) position.SetStart(x, y); }
     public StepSnapshot GetSnapshot() { lock (gate) return snapshot; }
     public FusionSnapshot GetFusionSnapshot() { lock (gate) return fusion.GetFusionSnapshot(); }
     public void BeginGyroCalibration() { lock (gate) fusion.BeginGyroCalibration(); }
@@ -76,7 +80,8 @@ public sealed class StepSession : IStepSession, ISensorFusionSession, IActivityS
                 motion.FilteredWorldAcceleration.Y, motion.WorldAngularVelocity?.Length ?? 0, motion.Confidence > 0));
             activity = classifier.Update(detector.Features, time, context);
             carrying = carryingClassifier.Update(motion, fusion.GetFusionSnapshot().Orientation, activity, carryingContext);
-            humanHeading.Update(motion, fusion.GetDeviceOrientation(), activity, carrying, detector.Features?.CadenceHz);
+            var heading = humanHeading.Update(motion, fusion.GetDeviceOrientation(), activity, carrying, detector.Features?.CadenceHz);
+            headings.Add((time, heading)); headings.RemoveAll(x => x.Seconds < time - 4); if (headings.Count > 600) headings.RemoveAt(0);
             if (activity.Candidate is ActivityKind.Walking or ActivityKind.Running && !context.DeclaredForklift && !carrying.Transition && carrying.Kind is not (CarryingKind.PickingUp or CarryingKind.PuttingAway or CarryingKind.VerticalSwinging)) pending.AddRange(detected);
             else pending.Clear();
             pending.RemoveAll(x => x.Seconds < time - 3);
@@ -85,7 +90,8 @@ public sealed class StepSession : IStepSession, ISensorFusionSession, IActivityS
             foreach (var step in pending)
             {
                 var running = activity.Kind == ActivityKind.Running;
-                var length = running ? options.RunningLength : options.WalkingLength;
+                var atStep = headings.LastOrDefault(x => x.Seconds <= step.Seconds).Heading ?? new HumanHeading(null, 0, Math.PI, "Unknown", "Riktning saknas vid stegets tidpunkt.");
+                var length = position.Add(step with { Running = running }, atStep);
                 snapshot = snapshot with { Total = snapshot.Total + 1, Walking = snapshot.Walking + (running ? 0 : 1), Running = snapshot.Running + (running ? 1 : 0),
                     DistanceMeters = snapshot.DistanceMeters + length, LastStepLengthMeters = length,
                     Confidence = motion.WorldAngularVelocity is null ? Math.Min(.5, step.Confidence) : step.Confidence,
@@ -98,7 +104,7 @@ public sealed class StepSession : IStepSession, ISensorFusionSession, IActivityS
     private void State(SensorState state)
     {
         lock (gate) if (sources.Values.Contains(state.SensorId) && state.Status is SensorStatus.Stopped or SensorStatus.Interrupted or SensorStatus.Error)
-        { snapshot = snapshot with { CadenceHz = 0, Confidence = 0 }; pending.Clear(); classifier.Reset(); activity = new(ActivityKind.Unknown, ActivityKind.Unknown, 0, false, 0, "Sensorström stoppad eller avbruten."); }
+        { position.Stop(); snapshot = snapshot with { CadenceHz = 0, Confidence = 0 }; pending.Clear(); classifier.Reset(); activity = new(ActivityKind.Unknown, ActivityKind.Unknown, 0, false, 0, "Sensorström stoppad eller avbruten."); }
     }
     public void Dispose() { provider.ReadingReceived -= Receive; provider.StateChanged -= State; }
 }

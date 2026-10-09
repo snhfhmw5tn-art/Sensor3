@@ -1,0 +1,27 @@
+@implements IDisposable
+@using Sensor3.Contracts
+@inject IServiceProvider Services
+<h1>Lokal position</h1>
+@if (session is not null)
+{
+    <label>Start X (m) <input type="number" @bind="x" /></label>
+    <label>Start Y (m) <input type="number" @bind="y" /></label>
+    <button @onclick="Anchor">Bekräfta lokal startpunkt</button>
+    <p>Bekräfta även personens startriktning i diagnostiken nedan. Startpunkt är en operatörsuppgift.</p>
+    <p>XY: @(snapshot?.Position?.X.ToString("F2") ?? "Unknown"), @(snapshot?.Position?.Y.ToString("F2") ?? "Unknown") m · gång @snapshot?.WalkingMeters.ToString("F2") m · löpning @snapshot?.RunningMeters.ToString("F2") m · hastighet @(snapshot?.SpeedMetersPerSecond?.ToString("F2") ?? "Unknown") m/s · osäkerhet @snapshot?.UncertaintyMeters.ToString("F2") m</p>
+    <p>@snapshot?.Detail @message</p>
+}
+else { <p>Native-enhet krävs för lokal mätning. Webbläsaren samlar inga rörelsesensorer.</p> }
+<SensorDiagnosticsView />
+@code {
+    private INavigationSession? session;
+    private PositionSnapshot? snapshot;
+    private double x, y;
+    private string message = "";
+    private bool disposed;
+    private System.Threading.Timer? timer;
+    protected override void OnInitialized() { session = Services.GetService(typeof(INavigationSession)) as INavigationSession; if (session is not null) timer = new(_ => { _ = Refresh(); }, null, 0, 250); }
+    private void Anchor() { try { session!.SetStartPosition(x, y); message = "Ny startpunkt. Stegtotal behålls."; } catch (ArgumentException e) { message = e.Message; } }
+    private async Task Refresh() { if (disposed) return; try { await InvokeAsync(() => { if (!disposed) { snapshot = session!.GetPosition(); StateHasChanged(); } }); } catch (ObjectDisposedException) when (disposed) { } catch (TaskCanceledException) when (disposed) { } }
+    public void Dispose() { disposed = true; timer?.Dispose(); }
+}

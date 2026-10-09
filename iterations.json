@@ -174,11 +174,13 @@
     "number": 13,
     "commitDateUtc": null,
     "description": "PDR, position och hastighet",
-    "status": "NotStarted",
-    "testResult": "NotRun",
+    "status": "Implemented",
+    "testResult": "192 MSTest passed; Android/Windows build 0 errors/warnings; API/dashboard smoke passed.",
     "name": "PDR, position och hastighet",
     "verifiedAtUtc": null,
-    "blockers": [],
+    "blockers": [
+      "Physical ground-truth distance/carry validation NotRun; remote navigation integration pending."
+    ],
     "latestCommit": "Unknown"
   },
   {
