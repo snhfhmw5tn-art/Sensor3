@@ -185,7 +185,7 @@
   },
   {
     "number": 14,
-    "commitDateUtc": null,
+    "commitDateUtc": "2026-10-09T18:42:03+02:00",
     "description": "Truckkörning och GPS-fusion",
     "status": "Implemented",
     "testResult": "196 MSTest passed; Android/Windows build 0 errors/warnings; smoke passed.",
@@ -194,7 +194,7 @@
     "blockers": [
       "Physical truck/GPS/IMU ground-truth validation NotRun; production reference unavailable."
     ],
-    "latestCommit": "Unknown"
+    "latestCommit": "4732c18ff9d347c00e66614ab535f47f0a8d7730"
   },
   {
     "number": 15,
