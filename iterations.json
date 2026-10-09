@@ -187,11 +187,13 @@
     "number": 14,
     "commitDateUtc": null,
     "description": "Truckkörning och GPS-fusion",
-    "status": "NotStarted",
-    "testResult": "NotRun",
+    "status": "Implemented",
+    "testResult": "196 MSTest passed; Android/Windows build 0 errors/warnings; smoke passed.",
     "name": "Truckkörning och GPS-fusion",
     "verifiedAtUtc": null,
-    "blockers": [],
+    "blockers": [
+      "Physical truck/GPS/IMU ground-truth validation NotRun; production reference unavailable."
+    ],
     "latestCommit": "Unknown"
   },
   {

@@ -6,7 +6,7 @@
 @if (locationProvider is null) { <p>Native-klient krävs. Webbläsaren samlar inte plats eller radiosignaler.</p> }
 else
 {
-    <p>Manuella förgrundsprov. Plats- och närhetsbehörigheter begärs av operativsystemet. Ingen position beräknas från WiFi eller BLE i denna iteration.</p>
+    <p>Manuella förgrundsprov. Plats- och närhetsbehörigheter begärs av operativsystemet. Observationer skickas till den lokala beräkningskedjan när respektive referens är konfigurerad.</p>
     <button disabled="@busy" @onclick="Location">Hämta platsfix</button>
     <button disabled="@busy" @onclick="Wifi">Skanna WiFi</button>
     <button disabled="@busy" @onclick="Bluetooth">Skanna BLE (5 s)</button>
@@ -34,6 +34,7 @@ else
 }
 </section>
 @code {
+    private NativeObservationBus? bus;
     private ILocationProvider? locationProvider;
     private IWifiScanner? wifiScanner;
     private IBluetoothScanner? bluetoothScanner;
@@ -46,14 +47,15 @@ else
     private string message = "Inga radio-/platsprov tagna";
     protected override void OnInitialized()
     {
+        bus = Services.GetService(typeof(NativeObservationBus)) as NativeObservationBus;
         locationProvider = Services.GetService(typeof(ILocationProvider)) as ILocationProvider;
         wifiScanner = Services.GetService(typeof(IWifiScanner)) as IWifiScanner;
         bluetoothScanner = Services.GetService(typeof(IBluetoothScanner)) as IBluetoothScanner;
     }
     private static string Unknown(double? value) => value?.ToString("G6") ?? "Unknown";
-    private Task Location() => Run(async token => { location = await locationProvider!.GetAsync(token); message = $"Plats: {location.Status} · {location.Detail}"; });
-    private Task Wifi() => Run(async token => { wifi = await wifiScanner!.ScanAsync(token); message = $"WiFi: {wifi.Status}"; });
-    private Task Bluetooth() => Run(async token => { bluetooth = await bluetoothScanner!.ScanAsync(TimeSpan.FromSeconds(5), token); message = $"BLE: {bluetooth.Status}"; });
+    private Task Location() => Run(async token => { location = await locationProvider!.GetAsync(token); if (location.Status == ObservationStatus.Available && location.Value is { } fix) bus?.Publish(fix); message = $"Plats: {location.Status} · {location.Detail}"; });
+    private Task Wifi() => Run(async token => { wifi = await wifiScanner!.ScanAsync(token); if (wifi.Status == ObservationStatus.Available && wifi.Value is { } observations) bus?.Publish(observations); message = $"WiFi: {wifi.Status}"; });
+    private Task Bluetooth() => Run(async token => { bluetooth = await bluetoothScanner!.ScanAsync(TimeSpan.FromSeconds(5), token); if (bluetooth.Status == ObservationStatus.Available && bluetooth.Value is { } observations) bus?.Publish(observations); message = $"BLE: {bluetooth.Status}"; });
     private void Cancel() => pending?.Cancel();
     private async Task Run(Func<CancellationToken, Task> action)
     {

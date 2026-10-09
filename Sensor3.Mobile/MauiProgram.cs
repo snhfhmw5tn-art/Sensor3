@@ -28,6 +28,8 @@ public static class MauiProgram
         builder.Services.AddSingleton(updateOptions);
         builder.Services.AddSingleton<Sensor3.Contracts.UpdateSessionGuard>();
         builder.Services.AddSingleton<NativeObservationLifetime>();
+        builder.Services.AddSingleton<Sensor3.Contracts.NativeObservationBus>();
+        builder.Services.AddSingleton<Sensor3.Contracts.IForkliftMotionEstimator, Sensor3.Core.VehicleSession>();
         builder.Services.AddSingleton<Sensor3.Contracts.ILocationProvider, NativeLocationProvider>();
         builder.Services.AddSingleton<Sensor3.Contracts.IStepSensorProvider, Sensor3.Sensors.NativeStepSensorProvider>();
 #if ANDROID

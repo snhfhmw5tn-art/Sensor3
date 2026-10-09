@@ -1,0 +1,24 @@
+@implements IDisposable
+@using Sensor3.Contracts
+@inject IServiceProvider Services
+@if (estimator is not null)
+{
+    <section><h2>Truck / GPS</h2>
+        <label>Känd GPS-origin lat <input type="number" @bind="latitude" /></label><label>lon <input type="number" @bind="longitude" /></label>
+        <button @onclick="Anchor">Bekräfta GPS-origin</button>
+        <p>Aktivera truckläge i aktivitetsdiagnostiken och hämta en verklig platsfix. Lokal GPS-origin har +Y geografisk nord, +X öst. PDR måste använda samma referens vid jämförelse.</p>
+        <p>Truck XY @(snapshot?.Position?.X.ToString("F2") ?? "Unknown"), @(snapshot?.Position?.Y.ToString("F2") ?? "Unknown") · separat sträcka @snapshot?.DistanceMeters.ToString("F2") m · fart @(snapshot?.SpeedMetersPerSecond?.ToString("F2") ?? "Unknown") m/s · kurs @(snapshot?.CourseRadians?.ToString("F2") ?? "Unknown") rad · kvalitet @snapshot?.Confidence.ToString("F2")</p><p>@snapshot?.Detail @message</p>
+    </section>
+}
+@code {
+    private IForkliftMotionEstimator? estimator;
+    private VehicleSnapshot? snapshot;
+    private double latitude, longitude;
+    private string message = "";
+    private bool disposed;
+    private System.Threading.Timer? timer;
+    protected override void OnInitialized() { estimator = Services.GetService(typeof(IForkliftMotionEstimator)) as IForkliftMotionEstimator; if (estimator is not null) timer = new(_ => { _ = Refresh(); }, null, 0, 250); }
+    private void Anchor() { try { estimator!.SetGpsOrigin(latitude, longitude); message = "GPS-origin registrerad; trucksträcka nollställd."; } catch (ArgumentException e) { message = e.Message; } }
+    private async Task Refresh() { if (disposed) return; try { await InvokeAsync(() => { if (!disposed) { snapshot = estimator!.GetSnapshot(); StateHasChanged(); } }); } catch (ObjectDisposedException) when (disposed) { } catch (TaskCanceledException) when (disposed) { } }
+    public void Dispose() { disposed = true; timer?.Dispose(); }
+}
