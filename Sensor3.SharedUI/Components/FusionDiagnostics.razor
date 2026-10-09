@@ -1,0 +1,33 @@
+@implements IDisposable
+@using Sensor3.Contracts
+@inject IServiceProvider Services
+@if (fusion is not null)
+{
+    <section><h2>Sensorfusion – telefonens pose och rörelse</h2>
+        <button @onclick="Calibrate">Kalibrera gyrobias med telefonen stilla</button>
+        <p>Starta gravity/accelerometer och gyro. Lägg telefonen stilla under kalibreringen. Kvalitetspoäng är heuristiska.</p>
+        @if (snapshot is { } current)
+        {
+            <p>Bias: @Vector(current.GyroBias) rad/s · kalibrerad @current.BiasCalibrated · gyrobrus @(current.GyroNoiseRms?.ToString("G4") ?? "Unknown") rad/s · accelerationsbrus @(current.AccelerationNoiseRms?.ToString("G4") ?? "Unknown") m/s²</p>
+            @if (current.Orientation is { } pose) { <p>DeviceOrientation: @pose.DeviceToWorld · telefonriktning @(pose.DeviceHeadingRadians is { } angle ? (angle * 180 / Math.PI).ToString("F1") : "Unknown")° · @pose.Frame</p> }
+            @if (current.Motion is { } motion) { <p>DeviceMotion: @Vector(motion.DeviceLinearAcceleration) m/s² · värld @Vector(motion.WorldLinearAcceleration) · filtrerad @Vector(motion.FilteredWorldAcceleration) · världsgyro @Vector(motion.WorldAngularVelocity) rad/s · kvalitet @motion.Confidence.ToString("F2")</p> }
+            <p>@current.Detail</p>
+        }
+    </section>
+}
+@code {
+    private ISensorFusionSession? fusion;
+    private FusionSnapshot? snapshot;
+    private bool disposed;
+    private System.Threading.Timer? timer;
+    protected override void OnInitialized() { fusion = Services.GetService(typeof(ISensorFusionSession)) as ISensorFusionSession; if (fusion is not null) timer = new(_ => { _ = Refresh(); }, null, 0, 250); }
+    private static string Vector(Vector3D? vector) => vector is { } v ? $"({v.X:G4}, {v.Y:G4}, {v.Z:G4})" : "Unknown";
+    private void Calibrate() => fusion!.BeginGyroCalibration();
+    private async Task Refresh()
+    {
+        if (disposed) return;
+        try { await InvokeAsync(() => { if (!disposed) { snapshot = fusion!.GetFusionSnapshot(); StateHasChanged(); } }); }
+        catch (ObjectDisposedException) when (disposed) { } catch (TaskCanceledException) when (disposed) { }
+    }
+    public void Dispose() { disposed = true; timer?.Dispose(); }
+}

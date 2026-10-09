@@ -1,6 +1,6 @@
 # Iterationshistorik
 
-Version 0.8.0. Implementerade: 8/18. Verifierade: 0/18. Publicerade: 0/18.
+Version 0.9.0. Implementerade: 9/18. Verifierade: 0/18. Publicerade: 0/18.
 
 | Nr | Namn | Status | Rapport |
 |---|---|---|---|
@@ -12,7 +12,7 @@ Version 0.8.0. Implementerade: 8/18. Verifierade: 0/18. Publicerade: 0/18.
 | 06 | GPS, WiFi och Bluetooth | Implemented | [Rapport](docs/iteration-06.md) |
 | 07 | Realtidskommunikation | Implemented | [Rapport](docs/iteration-07.md) |
 | 08 | Stegräknaren från Sensor App 2 | Implemented | [Rapport](docs/iteration-08.md) |
-| 09 | Koordinattransformation och sensorfusion | NotStarted | Återstår |
+| 09 | Koordinattransformation och sensorfusion | Implemented | [Rapport](docs/iteration-09.md) |
 | 10 | Aktivitetsigenkänning | NotStarted | Återstår |
 | 11 | Dynamisk bärpositionsklassificering | NotStarted | Återstår |
 | 12 | Personens färdriktning oberoende av telefonen | NotStarted | Återstår |
