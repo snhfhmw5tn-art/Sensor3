@@ -12,11 +12,11 @@ try {
         catch { if ($attempt -eq 19) { throw }; Start-Sleep -Milliseconds 500 }
     }
     $info = Invoke-RestMethod http://127.0.0.1:5301/api/system/build-info
-    if ($info.applicationVersion -ne '0.7.0') { throw 'API version mismatch' }
+    if ($info.applicationVersion -ne '0.8.0') { throw 'API version mismatch' }
     $entries = Invoke-RestMethod http://127.0.0.1:5301/api/system/iterations
     if ($entries.Count -ne 18) { throw 'Manifest mismatch' }
     $about = Invoke-WebRequest http://127.0.0.1:5302/about
-    if ($about.StatusCode -ne 200 -or $about.Content -notmatch 'Om Sensor 3' -or $about.Content -notmatch '0.7.0') { throw 'About failed' }
+    if ($about.StatusCode -ne 200 -or $about.Content -notmatch 'Om Sensor 3' -or $about.Content -notmatch '0.8.0') { throw 'About failed' }
     $sensors = Invoke-WebRequest http://127.0.0.1:5302/sensors
     if ($sensors.StatusCode -ne 200 -or $sensors.Content -notmatch 'Webbläsaren samlar inga rörelsesensorer' -or $sensors.Content -match 'Önskad frekvens') { throw 'Browser sensor boundary failed' }
     $diagnostics = Invoke-WebRequest http://127.0.0.1:5302/diagnostics

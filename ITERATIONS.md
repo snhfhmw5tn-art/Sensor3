@@ -1,6 +1,6 @@
 # Iterationshistorik
 
-Version 0.7.0. Implementerade: 7/18. Verifierade: 0/18. Publicerade: 0/18.
+Version 0.8.0. Implementerade: 8/18. Verifierade: 0/18. Publicerade: 0/18.
 
 | Nr | Namn | Status | Rapport |
 |---|---|---|---|
@@ -11,7 +11,7 @@ Version 0.7.0. Implementerade: 7/18. Verifierade: 0/18. Publicerade: 0/18.
 | 05 | Komplett sensordiagnostik | Implemented | [Rapport](docs/iteration-05.md) |
 | 06 | GPS, WiFi och Bluetooth | Implemented | [Rapport](docs/iteration-06.md) |
 | 07 | Realtidskommunikation | Implemented | [Rapport](docs/iteration-07.md) |
-| 08 | Stegräknaren från Sensor App 2 | NotStarted | Återstår |
+| 08 | Stegräknaren från Sensor App 2 | Implemented | [Rapport](docs/iteration-08.md) |
 | 09 | Koordinattransformation och sensorfusion | NotStarted | Återstår |
 | 10 | Aktivitetsigenkänning | NotStarted | Återstår |
 | 11 | Dynamisk bärpositionsklassificering | NotStarted | Återstår |

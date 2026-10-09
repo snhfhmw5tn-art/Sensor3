@@ -96,6 +96,7 @@ else
 @code {
     private ISensorProvider? Provider;
     private ISensorPermissionService? PermissionService;
+    private IStepSession? Steps;
     private SensorDiagnosticsSnapshot snapshot = new(null, []);
     private IReadOnlyList<SensorStatistics> nativeStatistics = [];
     private readonly HashSet<string> selected = [];
@@ -110,6 +111,7 @@ else
         // Resolve optional native services once, while the component's DI scope is alive.
         Provider = Services.GetService(typeof(ISensorProvider)) as ISensorProvider;
         PermissionService = Services.GetService(typeof(ISensorPermissionService)) as ISensorPermissionService;
+        Steps = Services.GetService(typeof(IStepSession)) as IStepSession;
         if (Provider is { } provider)
         {
             provider.ReadingReceived += Store.Receive;
@@ -145,6 +147,7 @@ else
     private Task Start() => Run(async () =>
     {
         var ids = selected.ToArray();
+        Steps?.Configure(snapshot.Sensors.Where(x => selected.Contains(x.Descriptor.Id)).Select(x => x.Descriptor).ToArray());
         Store.BeginSession(ids, frequency);
         try { await Provider!.StartAsync(ids, new() { FrequencyHz = frequency }); }
         catch (Exception exception) { foreach (var id in ids) Store.SetState(new(id, SensorStatus.Error, exception.Message)); throw; }

@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\Sensor3.StepDetection\Sensor3.StepDetection.csproj" />
     <ProjectReference Include="..\Sensor3.Contracts\Sensor3.Contracts.csproj" />
   </ItemGroup>
 

@@ -1,0 +1,26 @@
+@implements IDisposable
+@using Sensor3.Contracts
+@inject IServiceProvider Services
+@if (session is not null)
+{
+    <section><h2>Stegräknare</h2><p>Totalt @snapshot?.Total · gång @snapshot?.Walking · löpning @snapshot?.Running · kadens @snapshot?.CadenceHz.ToString("F2") Hz · @((snapshot?.CadenceHz * 60)?.ToString("F0")) steg/minut</p>
+        <p>Steglängd @(snapshot?.LastStepLengthMeters?.ToString("F2") ?? "Unknown") m · uppskattad sträcka @snapshot?.DistanceMeters.ToString("F2") m · kvalitet @snapshot?.Confidence.ToString("F2")</p>
+        <p>Native-total sedan enhetens start: @(snapshot?.NativeTotal?.ToString("F0") ?? "Unknown") · @snapshot?.Detail</p>
+        <button @onclick="Reset">Nollställ räknarsession</button>
+    </section>
+}
+@code {
+    private IStepSession? session;
+    private StepSnapshot? snapshot;
+    private bool disposed;
+    private System.Threading.Timer? timer;
+    protected override void OnInitialized() { session = Services.GetService(typeof(IStepSession)) as IStepSession; if (session is not null) timer = new(_ => { _ = Refresh(); }, null, 0, 250); }
+    private async Task Refresh()
+    {
+        if (disposed) return;
+        try { await InvokeAsync(() => { if (!disposed) { snapshot = session!.GetSnapshot(); StateHasChanged(); } }); }
+        catch (ObjectDisposedException) when (disposed) { } catch (TaskCanceledException) when (disposed) { }
+    }
+    private void Reset() { session!.Reset(); snapshot = session.GetSnapshot(); }
+    public void Dispose() { disposed = true; timer?.Dispose(); }
+}

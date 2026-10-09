@@ -104,11 +104,14 @@
     "number": 8,
     "commitDateUtc": null,
     "description": "Stegräknaren från Sensor App 2",
-    "status": "NotStarted",
-    "testResult": "NotRun",
+    "status": "Implemented",
+    "testResult": "141 passed, 0 failed, 0 skipped; Android + Windows build: 0 errors; two test-analyzer warnings corrected and test project rebuilt without warnings; HTTP smoke passed",
     "name": "Stegräknaren från Sensor App 2",
     "verifiedAtUtc": null,
-    "blockers": [],
+    "blockers": [
+      "Physical gait, running, pocket, arm swing and forklift vibration validation pending",
+      "Step length defaults require person calibration; confidence is heuristic"
+    ],
     "latestCommit": "Unknown"
   },
   {
