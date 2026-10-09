@@ -11,6 +11,7 @@ public sealed class PedestrianPositionEstimator
     private readonly List<LocalPoint> rawPath = [];
     private double walking, running, uncertainty, confidence, lastSeconds = double.NegativeInfinity;
     private double? speed;
+    private string method = "Weinberg-baseline: K × amplitud^¼.";
     public PedestrianPositionEstimator(PdrOptions? options = null)
     {
         this.options = options ?? new();
@@ -27,10 +28,24 @@ public sealed class PedestrianPositionEstimator
         if (!double.IsFinite(step.Seconds) || step.Seconds <= lastSeconds || !double.IsFinite(step.Amplitude) || step.Amplitude <= 0) return 0;
         lastSeconds = step.Seconds;
         var length = Math.Clamp((step.Running ? options.RunningCoefficient : options.WalkingCoefficient) * options.CalibrationScale * Math.Pow(step.Amplitude, .25), step.Running ? .45 : .25, step.Running ? 2 : 1.2);
-        if (step.Running) running += length; else walking += length;
-        speed = double.IsFinite(step.IntervalSeconds) && step.IntervalSeconds is > .2 and < 2 ? length / step.IntervalSeconds : null;
+        method = "Weinberg-baseline: K × amplitud^¼.";
+        return Move(length, step.Running, step.IntervalSeconds, step.Confidence, heading);
+    }
+    public double AddNative(long count, double seconds, double interval, double lengthMeters, bool runningStep, HumanHeading heading, double sourceConfidence)
+    {
+        if (count <= 0 || !double.IsFinite(seconds) || seconds < lastSeconds || !double.IsFinite(lengthMeters) || lengthMeters <= 0) return 0;
+        lastSeconds = seconds;
+        method = "Inbyggd stegsensor × antagen steglängd; sträckan är uppskattad. Batchade steg saknar individuella tider och flyttar inte XY.";
+        // A cumulative counter batch has only the last step's timestamp. Do not invent a trajectory.
+        if (count > 1) heading = new(null, 0, Math.PI, "Unknown", "Individuella stegtider saknas.");
+        return Move(count * lengthMeters, runningStep, count == 1 ? interval : double.NaN, sourceConfidence, heading);
+    }
+    private double Move(double length, bool runningStep, double interval, double sourceConfidence, HumanHeading heading)
+    {
+        if (runningStep) running += length; else walking += length;
+        speed = double.IsFinite(interval) && interval is > .2 and < 2 ? length / interval : null;
         var trusted = heading.Radians is { } angle && double.IsFinite(angle) && heading.Confidence > 0 && double.IsFinite(heading.UncertaintyRadians);
-        confidence = trusted ? Math.Min(step.Confidence, heading.Confidence) : 0;
+        confidence = trusted ? Math.Min(sourceConfidence, heading.Confidence) : 0;
         uncertainty = Math.Sqrt(uncertainty * uncertainty + Math.Pow(length * .2, 2) + Math.Pow(length * (trusted ? Math.Min(Math.PI, heading.UncertaintyRadians) : Math.PI), 2));
         if (position is not null && trusted)
         {
@@ -54,5 +69,5 @@ public sealed class PedestrianPositionEstimator
     public void UpdateActivity(ActivityEstimate activity, double seconds) { if (activity.Stable && activity.Kind == ActivityKind.Stationary) speed = 0; else if (!activity.Stable || activity.Kind is not (ActivityKind.Walking or ActivityKind.Running) || seconds - lastSeconds > 2) speed = null; }
     public void Stop() { speed = null; confidence = 0; }
     public PositionSnapshot Snapshot() => new(position, walking, running, speed, uncertainty, confidence, path.ToArray(),
-        "Weinberg-baseline: K × amplitud^¼. Kalibrera per person/tempo. Utan riktning hålls XY; osäkerheten växer. Radien är ett heuristiskt mått, inte ett statistiskt konfidensintervall.", rawPosition, rawPath.ToArray());
+        method + " Kalibrera per person/tempo. Utan riktning hålls XY; osäkerheten växer. Radien är ett heuristiskt mått, inte ett statistiskt konfidensintervall.", rawPosition, rawPath.ToArray());
 }

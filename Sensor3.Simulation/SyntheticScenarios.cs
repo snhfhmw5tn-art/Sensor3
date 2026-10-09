@@ -7,8 +7,8 @@ public static class SyntheticScenarios
     {
         if (!Enum.IsDefined(scenario) || !double.IsFinite(duration) || duration is < 5 or > 120) throw new ArgumentOutOfRangeException(nameof(scenario));
         var started = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero); var frames = new List<RecordedFrame>();
-        var kinds = new[] { SensorKind.Gyroscope, SensorKind.RotationVector, SensorKind.Gravity, SensorKind.LinearAcceleration };
-        var catalogue = kinds.Select(k => new SensorDescriptor(k.ToString(), "synthetic", k.ToString(), "SYNTHETIC TEST DATA", k, new(SensorReportingMode.Continuous), SensorStatus.Available)).ToArray();
+        var kinds = new[] { SensorKind.Gyroscope, SensorKind.RotationVector, SensorKind.Gravity, SensorKind.LinearAcceleration, SensorKind.StepDetector };
+        var catalogue = kinds.Select(k => new SensorDescriptor(k.ToString(), "synthetic", k.ToString(), "SYNTHETIC TEST DATA", k, new(k == SensorKind.StepDetector ? SensorReportingMode.SpecialTrigger : SensorReportingMode.Continuous), SensorStatus.Available)).ToArray();
         var truck = scenario is SyntheticScenario.ForkliftDriving or SyntheticScenario.ForkliftVibration or SyntheticScenario.GpsGap;
         var staticMotion = scenario is SyntheticScenario.Stationary or SyntheticScenario.Scanning || truck;
         var frequency = scenario == SyntheticScenario.Running ? 3 : 2; var length = scenario == SyntheticScenario.Running ? 1 : .7;
@@ -43,6 +43,7 @@ public static class SyntheticScenarios
             var activity = truck ? ActivityKind.Forklift : scenario == SyntheticScenario.Running ? ActivityKind.Running : scenario == SyntheticScenario.Scanning ? ActivityKind.Unknown : scenario == SyntheticScenario.Stationary ? ActivityKind.Stationary : ActivityKind.Walking;
             var speed = scenario == SyntheticScenario.ForkliftVibration ? 0 : 2;
             Add(SensorKind.LinearAcceleration, q.Conjugate().Rotate(world), truth: new(staticMotion ? 0 : (long)Math.Floor(t * frequency), truck ? speed * t : staticMotion ? 0 : length * frequency * t, truck ? Math.PI / 2 : heading, truck ? new(speed * t, 0) : xy, activity));
+            if (!staticMotion && Math.Floor(t * frequency) > Math.Floor(Math.Max(0, (i - 1) * .02) * frequency)) frames.Add(new(t + delay, new(new(SensorKind.StepDetector.ToString(), SensorKind.StepDetector, [new("steps", 1, "count")], (long)((1000 + t) * 1e9), null, started.AddSeconds(t + delay), SensorTimestampSource.AndroidElapsedRealtime, SensorQuality.Medium, "SYNTHETIC OS step event"))));
             if (truck && i % 50 == 0 && !(scenario == SyntheticScenario.GpsGap && t is >= 6 and <= 12)) frames.Add(new(t, new(Location: new(0, speed * t / 6371000 * 180 / Math.PI, 1, null, speed, 90, started.AddSeconds(t), false))));
             if (scenario == SyntheticScenario.WifiNoise && i % 50 == 0) frames.Add(new(t, new(Wifi: Enumerable.Range(1, 3).Select(n => new WifiObservation("SYNTHETIC", $"synthetic-ap-{n}", -55 + 20 * Math.Sin(t * n), 2412, started.AddSeconds(t), null, false)).ToArray())));
         }

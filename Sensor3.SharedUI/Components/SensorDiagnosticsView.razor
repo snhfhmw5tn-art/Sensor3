@@ -143,15 +143,18 @@ else
     }
     private static string Number(double? number) => number?.ToString("F2") ?? "Unknown";
     private void Select(string id, bool value) { if (value) selected.Add(id); else selected.Remove(id); }
-    private Task Discover() => Run(async () => { await LoadCatalogue(); selected.Clear(); message = "Inventering klar. Välj sensorer."; });
+    private Task Discover() => Run(async () => { await LoadCatalogue(); selected.Clear(); var nativeStep = snapshot.Sensors.Where(x => x.Descriptor.Status is SensorStatus.Available or SensorStatus.PermissionRequired).OrderBy(x => x.Descriptor.Kind == SensorKind.StepDetector ? 0 : 1).FirstOrDefault(x => x.Descriptor.Kind is SensorKind.StepDetector or SensorKind.StepCounter); if (nativeStep is not null) selected.Add(nativeStep.Descriptor.Id); message = nativeStep is null ? "Inbyggd stegsensor saknas. Beräknade steg används inte." : "Inbyggd stegsensor förvald. Begär behörighet vid behov och tryck Starta. Välj även IMU för riktning och aktivitetsanalys."; });
     private async Task LoadCatalogue()
     {
         var catalogue = await Provider!.DiscoverAsync();
         Store.SetClient(new("local-native", Build.TargetPlatform.Contains("android", StringComparison.OrdinalIgnoreCase) ? ClientPlatform.Android : ClientPlatform.Windows, Build), catalogue);
+        snapshot = Store.GetSnapshot();
         nativeStatistics = [];
     }
     private Task Start() => Run(async () =>
     {
+        var nativeStep = snapshot.Sensors.Where(x => x.Descriptor.Status == SensorStatus.Available).OrderBy(x => x.Descriptor.Kind == SensorKind.StepDetector ? 0 : 1).FirstOrDefault(x => x.Descriptor.Kind is SensorKind.StepDetector or SensorKind.StepCounter);
+        if (!snapshot.Sensors.Any(x => selected.Contains(x.Descriptor.Id) && (x.Descriptor.Kind is SensorKind.StepDetector or SensorKind.StepCounter)) && nativeStep is not null) selected.Add(nativeStep.Descriptor.Id);
         var ids = selected.ToArray();
         Steps?.Configure(snapshot.Sensors.Where(x => selected.Contains(x.Descriptor.Id)).Select(x => x.Descriptor).ToArray());
         Store.BeginSession(ids, frequency);
