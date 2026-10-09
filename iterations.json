@@ -116,7 +116,7 @@
   },
   {
     "number": 9,
-    "commitDateUtc": null,
+    "commitDateUtc": "2026-10-09T17:52:49+02:00",
     "description": "Koordinattransformation och sensorfusion",
     "status": "Implemented",
     "testResult": "151 passed, 0 failed, 0 skipped; Android + Windows VS MSBuild: 0 errors, 0 warnings; HTTP metadata/browser smoke passed",
@@ -126,7 +126,7 @@
       "Physical coordinate/yaw convention and thermal bias/noise validation pending",
       "Native world yaw is not human heading; gyro-free quality is limited"
     ],
-    "latestCommit": "Unknown"
+    "latestCommit": "98b2ae88062efd2cc0058117f4905f8a11ed1e74"
   },
   {
     "number": 10,
