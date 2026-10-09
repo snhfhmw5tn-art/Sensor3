@@ -211,7 +211,7 @@
   },
   {
     "number": 16,
-    "commitDateUtc": null,
+    "commitDateUtc": "2026-10-09T18:53:09+02:00",
     "description": "Lagerkarta och kartmatchning",
     "status": "Implemented",
     "testResult": "203 MSTest passed; Android/Windows 0 errors/warnings; smoke passed.",
@@ -220,7 +220,7 @@
     "blockers": [
       "Actual warehouse geometry/ground-truth validation and Google API credentials NotRun."
     ],
-    "latestCommit": "Unknown"
+    "latestCommit": "67eca0173fc0e2390659c6d16f24867212d1b80d"
   },
   {
     "number": 17,
