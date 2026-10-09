@@ -1,0 +1,82 @@
+@using System.Globalization
+@using System.Text.Json
+@using Sensor3.Contracts
+@using Sensor3.MapMatching
+<section><h2>Livekarta – lokal meterkoordinat</h2>
+    <label><input type="checkbox" @bind="follow" /> Auto Follow</label>
+    <button @onclick="() => scale = Math.Min(80, scale * 1.5)">Zoom +</button><button @onclick="() => scale = Math.Max(2, scale / 1.5)">Zoom −</button>
+    <button @onclick="() => Pan(-5, 0)">← 5 m</button><button @onclick="() => Pan(5, 0)">→ 5 m</button><button @onclick="() => Pan(0, 5)">↑ 5 m</button><button @onclick="() => Pan(0, -5)">↓ 5 m</button>
+    <p>Blå: rå PDR · grön: radiokorrigerad · lila: kartmatchad · orange: osäkerhetsradie. X→, Y↑. @StepCount steg · fart @(Position?.SpeedMetersPerSecond?.ToString("F2") ?? "Unknown") m/s · riktning @(Heading?.Radians?.ToString("F2") ?? "Unknown") rad</p>
+    <svg viewBox="0 0 600 400" role="img" aria-label="Lokal XY-karta med metergradering, råspår och kartmatchning" style="width:100%;max-width:900px;background:#fafafa;border:1px solid #777">
+        @for (var i = -150; i <= 150; i++)
+        {
+            var gx = Math.Floor(center.X) + i; var gy = Math.Floor(center.Y) + i;
+            if (X(gx) is >= 0 and <= 600) { <line x1="@F(X(gx))" y1="0" x2="@F(X(gx))" y2="400" stroke="@(gx % 10 == 0 ? "#999" : gx % 5 == 0 ? "#ccc" : "#eee")" /><g><text x="@F(X(gx))" y="390" font-size="10">@gx m</text></g> }
+            if (Y(gy) is >= 0 and <= 400) { <line x1="0" y1="@F(Y(gy))" x2="600" y2="@F(Y(gy))" stroke="@(gy % 10 == 0 ? "#999" : gy % 5 == 0 ? "#ccc" : "#eee")" /><g><text x="2" y="@F(Y(gy))" font-size="10">@gy m</text></g> }
+        }
+        @foreach (var feature in map.Features)
+        {
+            if (feature.Kind is MapFeatureKind.Rack or MapFeatureKind.Blocked) { <rect x="@F(X(Math.Min(feature.A.X, feature.B.X)))" y="@F(Y(Math.Max(feature.A.Y, feature.B.Y)))" width="@F(Math.Abs(feature.A.X-feature.B.X)*scale)" height="@F(Math.Abs(feature.A.Y-feature.B.Y)*scale)" fill="@(feature.Kind == MapFeatureKind.Rack ? "#b9a084" : "#ecb9b9")"><title>@feature.Name</title></rect> }
+            else if (feature.Kind == MapFeatureKind.Anchor) { <circle cx="@F(X(feature.A.X))" cy="@F(Y(feature.A.Y))" r="4" fill="black"><title>@feature.Name</title></circle> }
+            else { <line x1="@F(X(feature.A.X))" y1="@F(Y(feature.A.Y))" x2="@F(X(feature.B.X))" y2="@F(Y(feature.B.Y))" stroke="@(feature.Kind == MapFeatureKind.Wall ? "black" : feature.Kind == MapFeatureKind.Aisle ? "#a6cdad" : "#afbbdf")" stroke-width="@(feature.Kind == MapFeatureKind.Wall ? 3 : 8)"><title>@feature.Name</title></line> }
+        }
+        <polyline points="@Points(Position?.RawPath ?? [])" fill="none" stroke="#2868d8" stroke-width="2" />
+        <polyline points="@Points(Position?.Path ?? [])" fill="none" stroke="#00854a" stroke-width="2" />
+        <polyline points="@Points(matchedPath)" fill="none" stroke="#8b3bb4" stroke-width="2" />
+        @if (Position?.Path.FirstOrDefault() is { } start) { <circle cx="@F(X(start.X))" cy="@F(Y(start.Y))" r="5" fill="white" stroke="black"><title>Startpunkt</title></circle> }
+        @if (Position?.Position is { } point)
+        {
+            <circle cx="@F(X(point.X))" cy="@F(Y(point.Y))" r="@F(Math.Min(10000, Position.UncertaintyMeters*scale))" fill="#ffa500" opacity=".12" stroke="#a55d00" />
+            <circle cx="@F(X(point.X))" cy="@F(Y(point.Y))" r="5" fill="#00854a" />
+            @if (Heading?.Radians is { } radians && Heading.Confidence > 0) { <line x1="@F(X(point.X))" y1="@F(Y(point.Y))" x2="@F(X(point.X)+20*Math.Sin(radians))" y2="@F(Y(point.Y)-20*Math.Cos(radians))" stroke="#00854a" stroke-width="3" /> }
+        }
+        @if (matched?.Point is { } mp) { <circle cx="@F(X(mp.X))" cy="@F(Y(mp.Y))" r="5" fill="#8b3bb4" /> }
+    </svg>
+    <p>@matched?.Detail · partiklar @matched?.SurvivingParticles · kvalitet @matched?.Confidence.ToString("F2")</p>
+    <details><summary>Lagergeometri JSON – import/export</summary><p>Feature Kind: 0 Wall (segment), 1 Rack (rektangel), 2 Aisle (segment), 3 TruckRoad, 4 Blocked (rektangel), 5 Anchor. A/B är XY i meter. Inga exempelobjekt motsvarar ditt verkliga lager.</p>
+        <textarea @bind="geometry" rows="6" aria-label="Lagergeometri JSON"></textarea><button @onclick="Import">Importera geometri / återställ matchning</button><button @onclick="Export">Visa JSON</button><p role="status">@message</p>
+    </details>
+    <details><summary>Frivillig Google Maps-referens</summary>
+        <p>Lokal (0,0) måste kalibreras till lat/lon samt bäring för lokal +Y. Google-vyn visar kalibrerad position; lagergeometrin visas i den lokala kartan ovan. När vyn aktiveras skickas koordinater till Google. API-nyckel med Maps Embed aktiverad krävs och sparas inte.</p>
+        <label>Origin lat <input type="number" @bind="latitude" /></label><label>lon <input type="number" @bind="longitude" /></label><label>+Y bäring ° <input type="number" @bind="bearing" /></label><label>API-nyckel <input type="password" @bind="key" /></label><button @onclick="ShowGoogle">Aktivera kalibrerad Google-vy</button><button @onclick="() => googleUrl = null">Stäng Google-vy</button>
+        @if (googleUrl is not null) { <iframe title="Kalibrerad Google Maps-position" src="@googleUrl" width="600" height="400" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe> }
+    </details>
+</section>
+@code {
+    [Parameter] public PositionSnapshot? Position { get; set; }
+    [Parameter] public HumanHeading? Heading { get; set; }
+    [Parameter] public long StepCount { get; set; }
+    [Parameter] public bool Truck { get; set; }
+    private IndoorMap map = new([]);
+    private readonly IndoorParticleFilter filter = new();
+    private MatchedPosition? matched;
+    private readonly List<LocalPoint> matchedPath = [];
+    private LocalPoint center = new(0, 0), last = new(double.NaN, double.NaN);
+    private double scale = 15, latitude, longitude, bearing;
+    private bool follow = true;
+    private string geometry = "{\"Features\":[]}", message = "", key = "";
+    private string? googleUrl;
+    protected override void OnParametersSet()
+    {
+        if (Position?.Position is not { } p) return;
+        if (follow) center = p;
+        if (p == last) return; last = p; matched = filter.Update(p, Position.UncertaintyMeters, map, Truck);
+        if (matched.Point is { } mp) { matchedPath.Add(mp); if (matchedPath.Count > 4000) matchedPath.RemoveAt(0); }
+    }
+    private double X(double x) => 300+(x-center.X)*scale;
+    private double Y(double y) => 200-(y-center.Y)*scale;
+    private static string F(double value) => value.ToString("0.###", CultureInfo.InvariantCulture);
+    private string Points(IEnumerable<LocalPoint> path) => string.Join(" ", path.Select(p => $"{F(X(p.X))},{F(Y(p.Y))}"));
+    private void Pan(double x, double y) { follow = false; center = new(center.X+x, center.Y+y); }
+    private void Import()
+    {
+        try { if (geometry.Length > 1_000_000) throw new System.IO.InvalidDataException("För stor karta."); var next = JsonSerializer.Deserialize<IndoorMap>(geometry) ?? throw new System.IO.InvalidDataException("Karta saknas."); IndoorParticleFilter.Validate(next); map = next; filter.Reset(); matchedPath.Clear(); last = new(double.NaN, double.NaN); OnParametersSet(); message = "Geometri uppdaterad."; }
+        catch (Exception e) when (e is JsonException or System.IO.InvalidDataException) { message = e.Message; }
+    }
+    private void Export() => geometry = JsonSerializer.Serialize(map, new JsonSerializerOptions { WriteIndented = true });
+    private void ShowGoogle()
+    {
+        try { if (key.Length == 0 || Position?.Position is not { } p) throw new ArgumentException("API-nyckel och känd lokal position krävs."); var geo = new GeoCalibration(latitude, longitude, bearing).Convert(p); googleUrl = $"https://www.google.com/maps/embed/v1/place?key={Uri.EscapeDataString(key)}&q={F(geo.Latitude)},{F(geo.Longitude)}&zoom=19"; }
+        catch (ArgumentException e) { message = e.Message; }
+    }
+}

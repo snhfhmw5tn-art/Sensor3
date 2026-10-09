@@ -213,11 +213,13 @@
     "number": 16,
     "commitDateUtc": null,
     "description": "Lagerkarta och kartmatchning",
-    "status": "NotStarted",
-    "testResult": "NotRun",
+    "status": "Implemented",
+    "testResult": "203 MSTest passed; Android/Windows 0 errors/warnings; smoke passed.",
     "name": "Lagerkarta och kartmatchning",
     "verifiedAtUtc": null,
-    "blockers": [],
+    "blockers": [
+      "Actual warehouse geometry/ground-truth validation and Google API credentials NotRun."
+    ],
     "latestCommit": "Unknown"
   },
   {

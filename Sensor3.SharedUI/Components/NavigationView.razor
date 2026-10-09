@@ -12,16 +12,32 @@
     <p>@snapshot?.Detail @message</p>
 }
 else { <p>Native-enhet krävs för lokal mätning. Webbläsaren samlar inga rörelsesensorer.</p> }
+<LiveIndoorMap Position="mapPosition" Heading="mapHeading" StepCount="@(steps?.GetSnapshot().Total ?? 0)" Truck="@(activity?.IsForkliftDeclared == true)" />
 <SensorDiagnosticsView />
 @code {
+    private IForkliftMotionEstimator? vehicle;
+    private PositionSnapshot? mapPosition;
+    private HumanHeading? mapHeading;
+    private readonly List<LocalPoint> vehiclePath = [];
+    private IHumanHeadingSession? heading;
+    private IStepSession? steps;
+    private IActivitySession? activity;
     private INavigationSession? session;
     private PositionSnapshot? snapshot;
     private double x, y;
     private string message = "";
     private bool disposed;
     private System.Threading.Timer? timer;
-    protected override void OnInitialized() { session = Services.GetService(typeof(INavigationSession)) as INavigationSession; if (session is not null) timer = new(_ => { _ = Refresh(); }, null, 0, 250); }
+    protected override void OnInitialized() { vehicle = Services.GetService(typeof(IForkliftMotionEstimator)) as IForkliftMotionEstimator; heading = Services.GetService(typeof(IHumanHeadingSession)) as IHumanHeadingSession; steps = Services.GetService(typeof(IStepSession)) as IStepSession; activity = Services.GetService(typeof(IActivitySession)) as IActivitySession; session = Services.GetService(typeof(INavigationSession)) as INavigationSession; if (session is not null) timer = new(_ => { _ = Refresh(); }, null, 0, 250); }
     private void Anchor() { try { session!.SetStartPosition(x, y); message = "Ny startpunkt. Stegtotal behålls."; } catch (ArgumentException e) { message = e.Message; } }
-    private async Task Refresh() { if (disposed) return; try { await InvokeAsync(() => { if (!disposed) { snapshot = session!.GetPosition(); StateHasChanged(); } }); } catch (ObjectDisposedException) when (disposed) { } catch (TaskCanceledException) when (disposed) { } }
+    private async Task Refresh() { if (disposed) return; try { await InvokeAsync(() => { if (!disposed) { snapshot = session!.GetPosition(); mapPosition = snapshot; mapHeading = heading?.GetHeading();
+        if (activity?.IsForkliftDeclared == true && vehicle is not null)
+        {
+            var v = vehicle.GetSnapshot();
+            if (v.Position is { } p && (vehiclePath.Count == 0 || vehiclePath[^1] != p)) { vehiclePath.Add(p); if (vehiclePath.Count > 4000) vehiclePath.RemoveAt(0); }
+            mapPosition = new(v.Position, snapshot.WalkingMeters, snapshot.RunningMeters, v.SpeedMetersPerSecond, v.AccuracyMeters ?? 0, v.Confidence, vehiclePath.ToArray(), "Truck GPS", v.Position, vehiclePath.ToArray());
+            mapHeading = new(v.CourseRadians, v.Confidence, Math.PI, "GPS course", v.Detail);
+        }
+        StateHasChanged(); } }); } catch (ObjectDisposedException) when (disposed) { } catch (TaskCanceledException) when (disposed) { } }
     public void Dispose() { disposed = true; timer?.Dispose(); }
 }
