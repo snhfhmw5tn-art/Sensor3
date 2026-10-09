@@ -46,6 +46,8 @@ Status kvarstår **Implemented**, inte Verified. Iteration 02 har inte påbörja
 
 ### Komplettering: SDK-sökvägar från IDE
 
+Ny byggkontroll på ren commit `ca33b6a`: hela solutionen byggdes med Visual Studios MSBuild (Debug, restore, båda native-målen), avslutningskod 0 utan rapporterade fel/varningar. Android `Compile` med DesignTimeBuild=true, BuildingInsideVisualStudio=true och BuildProjectReferences=false passerade med 0 fel/0 varningar på 2,93 sekunder. Alla sju MSTest-fall samt API/dashboard-smoketest passerade med korrekt Git-metadata. Lokala loggar: `artifacts/visual-studio-build.log` och `artifacts/android-design-time-build.log`. XA5300 reproducerades inte i dessa kontroller. IDE-komponenterna saknas fortfarande i installationslistan; resultatet bekräftar inte att IDE:s aktiva felpanel är rättad.
+
 Fortsatt XA5300 ledde till kontroll av Visual Studio-installationens `selectedPackages`: MAUI-grupperna Android, Windows, Blazor och Shared saknas. Dessa deklareras nu i `.vsconfig`. Installation återstår medan Visual Studio körs. .NET SDK-workloads via CLI är installerade sedan tidigare; IDE-komponenterna är ett separat installationskrav.
 
 Användarens SDK/JDK-inställningar har registrerats i 32-bitars registervyn under `HKCU\SOFTWARE\Novell\Mono for Android`, enligt SDK-resolverns implementation. Tidigare värden sparades lokalt i `artifacts/android-settings-before.json`. `_ResolveSdks` med projektets Directory.Build-filer och ANDROID_HOME/JAVA_HOME avstängda hittade båda installationerna och avslutades med kod 0. Design-time Compile för Android passerade också. Detta verifierar SDK-upptäckt utanför projektets reservlösning; XA5300 i IDE är ännu inte bekräftat löst.
