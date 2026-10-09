@@ -29,7 +29,7 @@
   },
   {
     "number": 3,
-    "commitDateUtc": "2026-10-09T13:23:09.0000000+00:00",
+    "commitDateUtc": "2026-10-09T15:23:09+02:00",
     "description": "Android APK, Windows MSIX och uppdateringar",
     "status": "Implemented",
     "testResult": "57 passed, 0 failed, 0 skipped (MSTest); 32 HTTP security/distribution checks passed; Android + Windows VS MSBuild: 0 errors/warnings; unsigned self-contained Windows Release MSIX and AppInstaller generation passed; native signed upgrade tests NotRun",
@@ -46,11 +46,15 @@
     "number": 4,
     "commitDateUtc": null,
     "description": "Native sensorinsamling",
-    "status": "NotStarted",
-    "testResult": "NotRun",
+    "status": "Implemented",
+    "testResult": "91 passed, 0 failed, 0 skipped (MSTest); Android + Windows VS MSBuild: 0 errors/warnings; 32 HTTP distribution checks and browser sensor boundary passed; native Windows discovery: 0 available, 15 unsupported, 0 errors; real sensor measurements NotRun",
     "name": "Native sensorinsamling",
     "verifiedAtUtc": null,
-    "blockers": [],
+    "blockers": [
+      "No Android device/emulator connected; native sensor collection and permission dialogs NotRun",
+      "This Windows computer exposes no available sensors; actual frequency, values and hardware interruption tests NotRun",
+      "Manual native UI and foreground lifecycle checks pending on both platforms"
+    ],
     "latestCommit": "Unknown"
   },
   {

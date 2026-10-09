@@ -6,7 +6,7 @@ Installera även MAUI-komponentgrupperna Android, Windows, Blazor och Shared som
 
 Byggkonfigurationen hittar även lokalt installerad Android SDK i `%LOCALAPPDATA%\Android\Sdk` och Java i `%LOCALAPPDATA%\Microsoft\Jdk` när inga explicita SDK-sökvägar har angetts. Befintliga explicita sökvägar har företräde.
 
-Native Android/Windows-klient, ASP.NET Core API och Blazor-dashboard, .NET 10 / C# 14. Version 0.3.0. Arbetet följer [masterplanen](docs/MASTERPLAN.md), en iteration i taget.
+Native Android/Windows-klient, ASP.NET Core API och Blazor-dashboard, .NET 10 / C# 14. Version 0.4.0. Arbetet följer [masterplanen](docs/MASTERPLAN.md), en iteration i taget.
 
 ## Bygg och kör
 
@@ -48,3 +48,9 @@ Publicera endast kontrollerade och signerade paket via administratörsformuläre
 Utöver .NET Android-workload behövs Android SDK och en kompatibel JDK. Installera dem genom Visual Studios Android-verktyg eller .NET-målet InstallAndroidDependencies efter att du godkänt SDK-licenserna. Ange ANDROID_HOME till SDK-mappen och JAVA_HOME till JDK-mappen som användarvariabler, och starta om Visual Studio efter ändringar. Maskinspecifika sökvägar ska inte läggas i projektfilen.
 
 Kontrollerat lokalt 2026-10-09: Android SDK med workload 36.1.43, Microsoft OpenJDK 17.0.14; hela solutionen bygger för Android och Windows med 0 fel och 0 varningar. Starttest på Android kräver ansluten enhet eller emulator.
+
+## Native sensorinsamling – iteration 04
+
+Öppna **Sensorinsamling** (`/sensors`) i Android- eller Windows-appen, inventera och välj sensorer. Begär vid behov behörighet för valda Android-sensorer och tryck Starta. Standard är 50 Hz; 1–200 Hz kan begäras. OS/driver bestämmer faktisk takt, som beräknas från de mottagna sensorernas egna tidsstämplar. Saknad hårdvara visas som Unsupported, utan exempelvärden. Stoppa avslutar sessionen. Insamlingen stoppas också när sidan lämnas eller appen tappar fokus/går till bakgrunden; återstart är manuell.
+
+Rådata visas lokalt och skickas inte till servern. Webbläsaren erbjuder ingen sensorinsamling. Normaliserade enheter och native tidskällor bevaras; olika referensramar har ännu inte förenats. Full sensordiagnostik hör till iteration 05. Se [iteration 04](docs/iteration-04.md) för kontroller, berörda filer och kvarvarande hårdvaruprov. Status är Implemented; ingen klientrelease har publicerats.

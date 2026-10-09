@@ -30,8 +30,8 @@
     <ApplicationId>se.qsys.sensor3</ApplicationId>
 
     <!-- Versions -->
-    <ApplicationDisplayVersion>0.3.0</ApplicationDisplayVersion>
-    <ApplicationVersion Condition="'$(ApplicationVersion)' == ''">3</ApplicationVersion>
+    <ApplicationDisplayVersion>0.4.0</ApplicationDisplayVersion>
+    <ApplicationVersion Condition="'$(ApplicationVersion)' == ''">4</ApplicationVersion>
 
     <!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
     <WindowsPackageType Condition="'$(WindowsPackageType)' == ''">None</WindowsPackageType>
@@ -75,6 +75,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Sensor3.SharedUI\Sensor3.SharedUI.csproj" />
     <ProjectReference Include="..\Sensor3.Core\Sensor3.Core.csproj" />
+    <ProjectReference Include="..\Sensor3.Sensors\Sensor3.Sensors.csproj" />
   </ItemGroup>
 
 </Project>

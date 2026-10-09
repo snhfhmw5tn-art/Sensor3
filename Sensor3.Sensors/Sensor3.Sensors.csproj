@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
     <ProjectReference Include="..\Sensor3.Contracts\Sensor3.Contracts.csproj" />
   </ItemGroup>
 
