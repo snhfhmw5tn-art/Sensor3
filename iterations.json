@@ -102,7 +102,7 @@
   },
   {
     "number": 8,
-    "commitDateUtc": null,
+    "commitDateUtc": "2026-10-09T17:43:31+02:00",
     "description": "Stegräknaren från Sensor App 2",
     "status": "Implemented",
     "testResult": "141 passed, 0 failed, 0 skipped; Android + Windows build: 0 errors; two test-analyzer warnings corrected and test project rebuilt without warnings; HTTP smoke passed",
@@ -112,7 +112,7 @@
       "Physical gait, running, pocket, arm swing and forklift vibration validation pending",
       "Step length defaults require person calibration; confidence is heuristic"
     ],
-    "latestCommit": "Unknown"
+    "latestCommit": "469a0544e3f237b3c14ffbac45849cb6180d7d89"
   },
   {
     "number": 9,
