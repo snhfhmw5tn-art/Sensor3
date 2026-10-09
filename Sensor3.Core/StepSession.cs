@@ -2,10 +2,11 @@ using Sensor3.SensorFusion;
 using Sensor3.Contracts;
 using Sensor3.StepDetection;
 using Sensor3.ActivityRecognition;
+using Sensor3.CarryingMode;
 
 namespace Sensor3.Core;
 
-public sealed class StepSession : IStepSession, ISensorFusionSession, IActivitySession, IDisposable
+public sealed class StepSession : IStepSession, ISensorFusionSession, IActivitySession, ICarryingSession, IDisposable
 {
     private readonly object gate = new();
     private readonly ISensorProvider provider;
@@ -16,6 +17,9 @@ public sealed class StepSession : IStepSession, ISensorFusionSession, IActivityS
     private readonly IActivityClassifier classifier;
     private readonly List<StepEvent> pending = [];
     private ActivityContext context = new();
+    private readonly ICarryingClassifier carryingClassifier = new BaselineCarryingClassifier();
+    private CarryingContext carryingContext = new();
+    private CarryingEstimate carrying = new(CarryingKind.Unknown, false, 0, new Dictionary<CarryingKind, double> { [CarryingKind.Unknown] = 1 }, 0, 0, "Väntar på sensorer.");
     private ActivityEstimate activity = new(ActivityKind.Unknown, ActivityKind.Unknown, 0, false, 0, "Väntar på tillräckligt sensorunderlag.");
     private StepSnapshot snapshot = Empty();
     public StepSession(ISensorProvider provider, StepOptions? options = null, IActivityClassifier? classifier = null)
@@ -30,6 +34,7 @@ public sealed class StepSession : IStepSession, ISensorFusionSession, IActivityS
             sources.Clear(); foreach (var group in selected.GroupBy(x => x.Kind)) sources[group.Key] = group.First().Id;
             detector.ResetEvidence(); fusion.ResetEvidence();
             this.classifier.Reset(); pending.Clear(); activity = new(ActivityKind.Unknown, ActivityKind.Unknown, 0, false, 0, "Källorna har ändrats; räknartotal behålls.");
+            carryingClassifier.Reset(); carryingContext = carryingContext with { LightLux = null, ProximityMeters = null };
         }
     }
     public StepSnapshot GetSnapshot() { lock (gate) return snapshot; }
@@ -38,6 +43,13 @@ public sealed class StepSession : IStepSession, ISensorFusionSession, IActivityS
     public ActivityEstimate GetActivity() { lock (gate) return activity; }
     public GaitFeatures? GetActivityFeatures() { lock (gate) return detector.Features; }
     public bool IsForkliftDeclared { get { lock (gate) return context.DeclaredForklift; } }
+    public CarryingEstimate GetCarrying() { lock (gate) return carrying; }
+    public CarryingKind DeclaredCarrying { get { lock (gate) return carryingContext.Declared; } }
+    public void SetDeclaredCarrying(CarryingKind kind)
+    {
+        if (!Enum.IsDefined(kind)) throw new ArgumentOutOfRangeException(nameof(kind));
+        lock (gate) { carryingContext = carryingContext with { Declared = kind }; carryingClassifier.Reset(); }
+    }
     public void SetDeclaredForklift(bool declared) { lock (gate) { context = context with { DeclaredForklift = declared }; pending.Clear(); classifier.Reset(); detector.ResetEvidence(); activity = new(ActivityKind.Unknown, declared ? ActivityKind.Forklift : ActivityKind.Unknown, 0, false, 0, "Operatörsuppgift har ändrats; nytt evidensfönster krävs."); } }
     public void Reset() { lock (gate) { snapshot = Empty(); detector = new(options); pending.Clear(); } }
     private static StepSnapshot Empty() => new(0, 0, 0, 0, 0, null, 0, null, "Research-modell. Kalibrera steglängd; gång kan inte bevisas av IMU ensam.");
@@ -50,12 +62,15 @@ public sealed class StepSession : IStepSession, ISensorFusionSession, IActivityS
             if (seconds is not { } time) return;
             if (reading.Kind == SensorKind.StepCounter)
             { snapshot = snapshot with { NativeTotal = reading.Values.FirstOrDefault()?.Value }; return; }
+            if (reading.Kind == SensorKind.Light) { carryingContext = carryingContext with { LightLux = reading.Values.FirstOrDefault()?.Value }; return; }
+            if (reading.Kind == SensorKind.Proximity) { carryingContext = carryingContext with { ProximityMeters = reading.Values.FirstOrDefault()?.Value }; return; }
             var motion = fusion.Process(reading, sources.ContainsKey(SensorKind.LinearAcceleration));
             if (motion is null) return;
             var detected = detector.Update(new(time, motion.FilteredWorldAcceleration.Z, motion.FilteredWorldAcceleration.X,
                 motion.FilteredWorldAcceleration.Y, motion.WorldAngularVelocity?.Length ?? 0, motion.Confidence > 0));
             activity = classifier.Update(detector.Features, time, context);
-            if (activity.Candidate is ActivityKind.Walking or ActivityKind.Running && !context.DeclaredForklift) pending.AddRange(detected);
+            carrying = carryingClassifier.Update(motion, fusion.GetFusionSnapshot().Orientation, activity, carryingContext);
+            if (activity.Candidate is ActivityKind.Walking or ActivityKind.Running && !context.DeclaredForklift && !carrying.Transition && carrying.Kind is not (CarryingKind.PickingUp or CarryingKind.PuttingAway or CarryingKind.VerticalSwinging)) pending.AddRange(detected);
             else pending.Clear();
             pending.RemoveAll(x => x.Seconds < time - 3);
             if (pending.Count > 64) pending.RemoveRange(0, pending.Count - 64);

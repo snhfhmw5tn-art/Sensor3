@@ -30,6 +30,8 @@ public sealed class StepSessionTests
         for (var i = 0; i < 500; i++) { var wave = Math.Sin(2 * Math.PI * 2 * i * .02); provider.Emit(SensorKind.Accelerometer, i * .02, .6 * wave, 0, 9.80665 + 2 * wave); }
         var before = session.GetSnapshot(); Assert.IsGreaterThan(10L, before.Total);
         provider.Emit(SensorKind.StepCounter, 10, 999); Assert.AreEqual(before.Total, session.GetSnapshot().Total); Assert.AreEqual(999d, session.GetSnapshot().NativeTotal);
+        session.SetDeclaredCarrying(CarryingKind.Pocket); Assert.AreEqual(before.Total, session.GetSnapshot().Total);
+        session.SetDeclaredCarrying(CarryingKind.Viewing); Assert.AreEqual(before.Total, session.GetSnapshot().Total);
         session.Configure(catalogue); Assert.AreEqual(before.Total, session.GetSnapshot().Total);
         session.SetDeclaredForklift(true);
         for (var i = 500; i < 1000; i++) { var wave = Math.Sin(2 * Math.PI * 2 * i * .02); provider.Emit(SensorKind.Accelerometer, i * .02, .6 * wave, 0, 9.80665 + 2 * wave); }

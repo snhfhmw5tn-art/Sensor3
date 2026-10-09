@@ -1,0 +1,29 @@
+@implements IDisposable
+@using Sensor3.Contracts
+@inject IServiceProvider Services
+@if (session is not null)
+{
+    <section><h2>Bärposition – separat från aktivitet</h2>
+        <label>Operatörsuppgift <select value="@session.DeclaredCarrying" @onchange="Declare">@foreach (var kind in Enum.GetValues<CarryingKind>()) { <option value="@kind">@(kind == CarryingKind.Unknown ? "Automatisk baseline" : kind.ToString() + " (deklarerat)")</option> }</select></label>
+        <p>@estimate?.Kind · byte pågår @estimate?.Transition · kvalitet @estimate?.Confidence.ToString("F2")</p>
+        <p>@estimate?.Explanation</p>
+        @if (estimate is { } current) { <p>Cross-window @current.CrossWindowAccelerationChange.ToString("F2") · within-window @current.WithinWindowAccelerationRange.ToString("F2") m/s²</p>
+            <table><thead><tr><th>Hypotes</th><th>Heuristisk sannolikhet (okalibrerad)</th></tr></thead><tbody>@foreach (var hypothesis in current.Probabilities.OrderByDescending(x => x.Value)) { <tr><td>@hypothesis.Key</td><td>@hypothesis.Value.ToString("P1")</td></tr> }</tbody></table>
+        }
+    </section>
+}
+@code {
+    private ICarryingSession? session;
+    private CarryingEstimate? estimate;
+    private bool disposed;
+    private System.Threading.Timer? timer;
+    protected override void OnInitialized() { session = Services.GetService(typeof(ICarryingSession)) as ICarryingSession; if (session is not null) timer = new(_ => { _ = Refresh(); }, null, 0, 250); }
+    private void Declare(ChangeEventArgs args) { if (Enum.TryParse<CarryingKind>(args.Value?.ToString(), out var kind)) session!.SetDeclaredCarrying(kind); }
+    private async Task Refresh()
+    {
+        if (disposed) return;
+        try { await InvokeAsync(() => { if (!disposed) { estimate = session!.GetCarrying(); StateHasChanged(); } }); }
+        catch (ObjectDisposedException) when (disposed) { } catch (TaskCanceledException) when (disposed) { }
+    }
+    public void Dispose() { disposed = true; timer?.Dispose(); }
+}

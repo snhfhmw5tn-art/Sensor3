@@ -146,11 +146,14 @@
     "number": 11,
     "commitDateUtc": null,
     "description": "Dynamisk bärpositionsklassificering",
-    "status": "NotStarted",
-    "testResult": "NotRun",
+    "status": "Implemented",
+    "testResult": "161 passed, 0 failed, 0 skipped; Android + Windows VS MSBuild: 0 errors, 0 warnings; HTTP metadata/browser smoke passed",
     "name": "Dynamisk bärpositionsklassificering",
     "verifiedAtUtc": null,
-    "blockers": [],
+    "blockers": [
+      "Physical hand/pocket/swing/scanning/mounted validation pending",
+      "Hypothesis probabilities are uncalibrated; scanning/mounted require declared prior"
+    ],
     "latestCommit": "Unknown"
   },
   {
