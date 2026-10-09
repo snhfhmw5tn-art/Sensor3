@@ -198,7 +198,7 @@
   },
   {
     "number": 15,
-    "commitDateUtc": null,
+    "commitDateUtc": "2026-10-09T18:47:31+02:00",
     "description": "WiFi- och BLE-positionering",
     "status": "Implemented",
     "testResult": "200 MSTest passed; Android/Windows 0 errors/warnings; smoke passed.",
@@ -207,7 +207,7 @@
     "blockers": [
       "Physical fingerprint/beacon reference dataset and field RMSE NotRun."
     ],
-    "latestCommit": "Unknown"
+    "latestCommit": "df5de4dcfe961075e18f3aca2512902ea5b23b33"
   },
   {
     "number": 16,
