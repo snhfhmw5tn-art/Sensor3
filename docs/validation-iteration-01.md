@@ -1,5 +1,13 @@
 # Funktionstest – iteration 01, 2026-10-09
 
+## Komplettering: Visual Studios byggmiljö
+
+Senare kontroll med Visual Studios egen MSBuild reproducerade MSB4018: installationen saknar `VC\Tools\MSVC`. Detta fel syntes inte i tidigare `dotnet build`-kontroller. Windows-bygge i IDE är därför ännu inte godkänt.
+
+SDK-sökvägar med kontrollerade lokala standardmappar har lagts till i Directory.Build.props för att åtgärda XA5300 när IDE har gamla miljövariabler. MSVC-komponenten deklareras i .vsconfig. Sju MSTest-fall passerar efter ändringen.
+
+Installationsförsöket med administratörsrättigheter stoppades av Visual Studio Installer med `VSProcessesRunning`. Användaren behöver spara och stänga Visual Studio innan installationen kan fortsätta. Inga användarprocesser stängdes med tvång. Verifiera hela solutionen med Visual Studios MSBuild efter installation.
+
 Testad checkout: `C:\Users\boris.gasic\source\repos\snhfhmw5tn-art\Sensor3`. Version 0.1.0. Testomfattningen är den implementerade grundplattformen, inte sensorfunktionerna i senare iterationer.
 
 ## Resultat

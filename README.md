@@ -1,5 +1,9 @@
 # Sensor 3
 
+Visual Studios Windows-bygge behöver MSVC C++ x64/x86 build tools (`Microsoft.VisualStudio.Component.VC.Tools.x86.x64`). Kravet deklareras i `.vsconfig`. Installera komponenten via Visual Studio Installer med Visual Studio stängt. Ett godkänt `dotnet build` ersätter inte kontroll med Visual Studios egen MSBuild.
+
+Byggkonfigurationen hittar även lokalt installerad Android SDK i `%LOCALAPPDATA%\Android\Sdk` och Java i `%LOCALAPPDATA%\Microsoft\Jdk` när inga explicita SDK-sökvägar har angetts. Befintliga explicita sökvägar har företräde.
+
 Native Android/Windows-klient, ASP.NET Core API och Blazor-dashboard, .NET 10 / C# 14. Version 0.1.0. Arbetet följer [masterplanen](docs/MASTERPLAN.md), en iteration i taget.
 
 ## Bygg och kör
