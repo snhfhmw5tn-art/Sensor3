@@ -1,0 +1,85 @@
+@implements IAsyncDisposable
+@using Sensor3.Contracts
+@using Sensor3.Simulation
+@inject IServiceProvider Services
+@inject IJSRuntime JS
+<h1>Inspelning och simulering</h1>
+<p>Uppspelning är lokal beräkning av redan insamlade eller uttryckligen syntetiska data. Webbläsaren samlar inga rörelsesensorer. Export kan innehålla plats och radioidentifierare.</p>
+@if (recorder is not null)
+{
+    <label>Sessionsnamn <input @bind="name" /></label><button disabled="@recorder.IsRecording" @onclick="Start">Starta lokal inspelning</button><button disabled="@(!recorder.IsRecording)" @onclick="Stop">Stoppa / öppna inspelningen</button>
+    <p>Inspelade händelser @recorder.FrameCount. Starta sensorer på diagnostiksidan; inspelningen fortsätter i minnet när du återvänder hit, men sidbyte stoppar native-insamlingen. Max 60 000 händelser, därefter tydligt Truncated.</p>
+}
+<label>Syntetiskt scenario <select @bind="scenario">@foreach (var value in Enum.GetValues<SyntheticScenario>()) { <option value="@value">SYNTHETIC @value</option> }</select></label><button @onclick="Generate">Skapa syntetiskt underlag</button>
+<label>Importera Sensor3 JSON/CSV <InputFile OnChange="Import" accept=".json,.csv" /></label>
+@if (recording is not null && replay is not null)
+{
+    <p><strong>@(recording.Synthetic ? "SYNTHETIC – INTE FÄLTVALIDERING" : "NATIVE-INSPELNING – ground truth krävs för validering")</strong> · @recording.Name · @recording.Frames.Count händelser · Truncated @recording.Truncated</p>
+    <button @onclick="ExportJson">Exportera JSON</button><button @onclick="ExportCsv">Exportera CSV</button>
+    <button disabled="@playing" @onclick="Play">Spela</button><button disabled="@(!playing)" @onclick="Pause">Pausa</button><button @onclick="Rewind">Till början</button>
+    <label>Hastighet <select @bind="speed"><option value="0.25">0.25×</option><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option></select></label>
+    <label>Tidslinje @replay.Seconds.ToString("F2") / @replay.Duration.ToString("F2") s <input type="range" min="0" max="@replay.Duration.ToString(System.Globalization.CultureInfo.InvariantCulture)" step=".1" value="@replay.Seconds.ToString(System.Globalization.CultureInfo.InvariantCulture)" @onchange="Seek" /></label>
+    @if (comparison is not null)
+    {
+        <p>Stegfel @(comparison.StepError?.ToString() ?? "Unknown") · sträckfel @Number(comparison.DistanceErrorMeters) m · riktningsfel @Number(comparison.HeadingErrorRadians) rad · positionsfel @Number(comparison.PositionErrorMeters) m · klassifikationsprecision @Number(comparison.ClassificationPrecision) · modellfördröjning @Number(comparison.ModelDelaySeconds) s</p>
+        <p>JSON @comparison.JsonBytes byte · beräkning @comparison.ElapsedMilliseconds.ToString("F1") ms · process-CPU @comparison.CpuMilliseconds.ToString("F1") ms · @comparison.Detail</p>
+    }
+    <p>Modell: @replay.Analysis.Steps.GetActivity().Kind · @replay.Analysis.Steps.GetCarrying().Kind · steg @replay.Analysis.Steps.GetSnapshot().Total · heading @Number(replay.Analysis.Steps.GetHeading().Radians) · @replay.Analysis.Vehicle.GetSnapshot().Detail</p>
+    <LiveIndoorMap Position="replay.Analysis.Steps.GetPosition()" Heading="replay.Analysis.Steps.GetHeading()" StepCount="replay.Analysis.Steps.GetSnapshot().Total" />
+    <details><summary>Lägg till separat ground truth vid aktuell tidslinjepunkt</summary>
+        <p>Operatörens oberoende referens, inte modellens eget resultat. Exportera underlaget efter ändring. Angivna värden gäller vid den aktuella händelsen.</p>
+        <label>Steg <input type="number" @bind="truthSteps" /></label><label>Distans m <input type="number" @bind="truthDistance" /></label><label>Heading rad <input type="number" @bind="truthHeading" /></label><label>X m <input type="number" @bind="truthX" /></label><label>Y m <input type="number" @bind="truthY" /></label><label>Aktivitet <select @bind="truthActivity">@foreach (var value in Enum.GetValues<ActivityKind>()) { <option value="@value">@value</option> }</select></label><button @onclick="MarkTruth">Sätt uttrycklig ground truth</button>
+    </details>
+}
+<p role="status">@message</p>
+@code {
+    private IRecordingSession? recorder;
+    private SensorRecording? recording;
+    private ReplaySession? replay;
+    private ComparisonResult? comparison;
+    private SyntheticScenario scenario;
+    private string name = "Session", message = "";
+    private double speed = 1, truthDistance, truthHeading, truthX, truthY;
+    private long truthSteps;
+    private ActivityKind truthActivity;
+    private bool playing, disposed;
+    private long lastTick;
+    private double playSeconds;
+    private System.Threading.Timer? timer;
+    private IJSObjectReference? downloads;
+    protected override void OnInitialized() { recorder = Services.GetService(typeof(IRecordingSession)) as IRecordingSession; timer = new(_ => { _ = Tick(); }, null, 100, 100); }
+    private static string Number(double? number) => number?.ToString("F3") ?? "Unknown";
+    private void Load(SensorRecording value) { Pause(); replay?.Dispose(); recording = value; replay = new(value); comparison = replay.Compare(); }
+    private async Task Start() { try { await recorder!.StartAsync(name); message = "Inspelning startad. Insamling startas i diagnostiken."; } catch (Exception e) when (e is ArgumentException or InvalidOperationException) { message = e.Message; } }
+    private void Stop() { try { Load(recorder!.Stop()); } catch (InvalidOperationException e) { message = e.Message; } }
+    private void Generate() => Load(SyntheticScenarios.Create(scenario));
+    private async Task Import(InputFileChangeEventArgs args)
+    {
+        try { using var reader = new System.IO.StreamReader(args.File.OpenReadStream(16_000_000)); var text = await reader.ReadToEndAsync(); Load(args.File.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) ? RecordingCodec.FromCsv(text) : RecordingCodec.FromJson(text)); message = "Import klar."; }
+        catch (Exception e) when (e is System.IO.IOException or System.Text.Json.JsonException or ArgumentException) { message = "Import nekad: " + e.Message; }
+    }
+    private async Task Download(string extension, string content)
+    {
+        downloads ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Sensor3.SharedUI/download.js");
+        await downloads.InvokeVoidAsync("save", "sensor3-session." + extension, content, extension == "json" ? "application/json" : "text/csv;charset=utf-8");
+    }
+    private Task ExportJson() => Download("json", RecordingCodec.ToJson(recording!));
+    private Task ExportCsv() => Download("csv", RecordingCodec.ToCsv(recording!));
+    private void Play() { if (replay is null) return; playing = true; playSeconds = replay.Seconds; lastTick = System.Diagnostics.Stopwatch.GetTimestamp(); }
+    private void Pause() => playing = false;
+    private void Rewind() { Pause(); replay!.Seek(0); comparison = replay.Compare(); }
+    private void Seek(ChangeEventArgs args) { Pause(); if (double.TryParse(args.Value?.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var seconds)) { replay!.Seek(seconds); comparison = replay.Compare(); } }
+    private void MarkTruth()
+    {
+        Pause(); if (recording is null || replay is null || replay.Index == 0) { message = "Välj en händelse först."; return; }
+        try { var frames = recording.Frames.ToArray(); frames[replay.Index-1] = frames[replay.Index-1] with { Truth = new(truthSteps, truthDistance, truthHeading, new(truthX, truthY), truthActivity) }; var next = recording with { Frames = frames }; RecordingCodec.Validate(next); var time = replay.Seconds; Load(next); replay!.Seek(time); comparison = replay.Compare(); message = "Uttrycklig referens införd. Exportera för att spara."; }
+        catch (System.IO.InvalidDataException e) { message = e.Message; }
+    }
+    private async Task Tick()
+    {
+        if (disposed) return;
+        try { await InvokeAsync(() => { if (disposed) return; if (playing && replay is not null) { var now = System.Diagnostics.Stopwatch.GetTimestamp(); playSeconds += System.Diagnostics.Stopwatch.GetElapsedTime(lastTick, now).TotalSeconds * speed; lastTick = now; replay.AdvanceTo(Math.Min(playSeconds, replay.Duration)); comparison = replay.Compare(); if (replay.Index == recording!.Frames.Count) Pause(); } StateHasChanged(); }); }
+        catch (ObjectDisposedException) when (disposed) { } catch (TaskCanceledException) when (disposed) { }
+    }
+    public async ValueTask DisposeAsync() { disposed = true; Pause(); timer?.Dispose(); replay?.Dispose(); if (downloads is not null) { try { await downloads.DisposeAsync(); } catch (JSDisconnectedException) { } } }
+}

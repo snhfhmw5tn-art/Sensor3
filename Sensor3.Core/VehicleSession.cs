@@ -7,10 +7,11 @@ public sealed class VehicleSession : IForkliftMotionEstimator, IDisposable
     private readonly NativeObservationBus bus;
     private readonly IActivitySession activity;
     private readonly ISensorFusionSession fusion;
-    private readonly ForkliftMotionEstimator estimator = new();
-    public VehicleSession(NativeObservationBus bus, IActivitySession activity, ISensorFusionSession fusion)
-    { this.bus = bus; this.activity = activity; this.fusion = fusion; bus.LocationReceived += Receive; }
+    private readonly ForkliftMotionEstimator estimator;
+    public VehicleSession(NativeObservationBus bus, IActivitySession activity, ISensorFusionSession fusion, TimeProvider? clock = null)
+    { estimator = new(clock); this.bus = bus; this.activity = activity; this.fusion = fusion; bus.LocationReceived += Receive; }
     private void Receive(LocationObservation fix) => Update(fix, activity.IsForkliftDeclared, fusion.GetFusionSnapshot().Motion);
+    public LocalPoint? GetGpsOrigin() { lock (gate) return estimator.GetGpsOrigin(); }
     public void SetGpsOrigin(double latitude, double longitude) { lock (gate) estimator.SetGpsOrigin(latitude, longitude); }
     public void Update(LocationObservation fix, bool declaredForklift, DeviceMotion? motion) { lock (gate) estimator.Update(fix, declaredForklift, motion); }
     public VehicleSnapshot GetSnapshot() { lock (gate) return estimator.GetSnapshot(); }

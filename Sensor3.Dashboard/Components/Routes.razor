@@ -1,10 +1,10 @@
 @using Microsoft.AspNetCore.Components.Authorization
 <Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(Sensor3.SharedUI._Imports).Assembly }">
     <Found Context="routeData">
-        @if (routeData.PageType == typeof(Sensor3.SharedUI.Pages.Sensors) || routeData.PageType == typeof(Sensor3.SharedUI.Pages.Navigation))
+        @if (routeData.PageType == typeof(Sensor3.SharedUI.Pages.Sensors) || routeData.PageType == typeof(Sensor3.SharedUI.Pages.Navigation) || routeData.PageType == typeof(Sensor3.SharedUI.Pages.Simulation))
         {
             <LayoutView Layout="typeof(Layout.PortalLayout)">
-                @if (routeData.PageType == typeof(Sensor3.SharedUI.Pages.Navigation)) { <Sensor3.SharedUI.Components.NavigationView @rendermode="InteractiveServer" /> } else { <Sensor3.SharedUI.Components.SensorDiagnosticsView @rendermode="InteractiveServer" /> }
+                @if (routeData.PageType == typeof(Sensor3.SharedUI.Pages.Simulation)) { <Sensor3.SharedUI.Components.RecordingView @rendermode="InteractiveServer" /> } else if (routeData.PageType == typeof(Sensor3.SharedUI.Pages.Navigation)) { <Sensor3.SharedUI.Components.NavigationView @rendermode="InteractiveServer" /> } else { <Sensor3.SharedUI.Components.SensorDiagnosticsView @rendermode="InteractiveServer" /> }
             </LayoutView>
         }
         else

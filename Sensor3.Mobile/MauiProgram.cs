@@ -48,6 +48,7 @@ public static class MauiProgram
 #endif
         builder.Services.AddSingleton<Sensor3.Contracts.ISensorProvider, Sensor3.Sensors.SensorProvider>();
         builder.Services.AddSingleton<Sensor3.Core.StepSession>();
+        builder.Services.AddSingleton<Sensor3.Contracts.IRecordingSession, Sensor3.Core.RecordingSession>();
         builder.Services.AddSingleton<Sensor3.Contracts.IStepSession>(x => x.GetRequiredService<Sensor3.Core.StepSession>());
         builder.Services.AddSingleton<Sensor3.Contracts.ISensorFusionSession>(x => x.GetRequiredService<Sensor3.Core.StepSession>());
         builder.Services.AddSingleton<Sensor3.Contracts.IActivitySession>(x => x.GetRequiredService<Sensor3.Core.StepSession>());

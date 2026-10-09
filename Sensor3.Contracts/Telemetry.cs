@@ -3,7 +3,8 @@ namespace Sensor3.Contracts;
 public enum TelemetryMode { Research, Production }
 public sealed record TelemetryRegistration(DiagnosticsClient Client, Guid SessionId, TelemetryMode Mode,
     IReadOnlyList<SensorDescriptor> Catalogue, IReadOnlyList<IterationInfo> Iterations);
-public sealed record TelemetryEvent(SensorReading? Reading = null, SensorState? State = null);
+public sealed record TelemetryEvent(SensorReading? Reading = null, SensorState? State = null, LocationObservation? Location = null,
+    IReadOnlyList<WifiObservation>? Wifi = null, IReadOnlyList<BluetoothObservation>? Bluetooth = null);
 public sealed record TelemetryBatch(Guid SessionId, long Sequence, DateTimeOffset SentAtUtc, IReadOnlyList<TelemetryEvent> Events);
 public sealed record TelemetryAcknowledgement(long Sequence, bool Duplicate, BuildInfo ServerBuild);
 public sealed record TelemetryStatistics(long Packets, long PayloadBytes, long MissingPackets, long DroppedEvents,

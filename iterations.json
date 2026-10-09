@@ -226,11 +226,13 @@
     "number": 17,
     "commitDateUtc": null,
     "description": "Inspelning, simulering och jämförelse",
-    "status": "NotStarted",
-    "testResult": "NotRun",
+    "status": "Implemented",
+    "testResult": "207 MSTest passed; 15 synthetic scenarios; Android/Windows 0 errors/warnings; smoke passed.",
     "name": "Inspelning, simulering och jämförelse",
     "verifiedAtUtc": null,
-    "blockers": [],
+    "blockers": [
+      "Independent recordings/physical ground truth and on-device long-run CPU/battery NotRun; context event integration checked next."
+    ],
     "latestCommit": "Unknown"
   },
   {

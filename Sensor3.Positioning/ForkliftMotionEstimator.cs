@@ -14,6 +14,7 @@ public sealed class ForkliftMotionEstimator : IForkliftMotionEstimator
         this.clock = clock ?? TimeProvider.System; this.options = options ?? new();
         if (!double.IsFinite(this.options.MaximumAccuracyMeters) || this.options.MaximumAccuracyMeters <= 0 || !double.IsFinite(this.options.MaximumSpeedMetersPerSecond) || this.options.MaximumSpeedMetersPerSecond <= 0 || !double.IsFinite(this.options.FreshSeconds) || this.options.FreshSeconds <= 0) throw new ArgumentOutOfRangeException(nameof(options));
     }
+    public LocalPoint? GetGpsOrigin() => origin;
     public void SetGpsOrigin(double latitude, double longitude)
     {
         if (!ValidCoordinates(latitude, longitude)) throw new ArgumentOutOfRangeException(nameof(latitude));

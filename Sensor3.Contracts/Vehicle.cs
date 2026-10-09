@@ -4,6 +4,7 @@ public sealed record VehicleSnapshot(LocalPoint? Position, double DistanceMeters
 public interface IForkliftMotionEstimator
 {
     void SetGpsOrigin(double latitude, double longitude);
+    LocalPoint? GetGpsOrigin();
     void Update(LocationObservation fix, bool declaredForklift, DeviceMotion? motion);
     VehicleSnapshot GetSnapshot();
 }

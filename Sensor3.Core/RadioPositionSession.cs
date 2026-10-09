@@ -7,14 +7,14 @@ public sealed class RadioPositionSession : IRadioPositionSession, IDisposable
     private readonly object gate = new();
     private readonly NativeObservationBus bus;
     private readonly INavigationSession navigation;
-    private readonly RadioFingerprintEstimator estimator = new();
+    private readonly RadioFingerprintEstimator estimator;
     private readonly string? storagePath;
     private RadioMap map = new([], []);
     private IReadOnlyList<WifiObservation> latestWifi = [];
     private RadioPosition result = new(null, 0, 0, "Unknown", "Registrera kända punkter och skanna.");
-    public RadioPositionSession(NativeObservationBus bus, INavigationSession navigation, string? storagePath = null)
+    public RadioPositionSession(NativeObservationBus bus, INavigationSession navigation, string? storagePath = null, TimeProvider? timeProvider = null)
     {
-        this.bus = bus; this.navigation = navigation; this.storagePath = storagePath;
+        estimator = new(timeProvider: timeProvider); this.bus = bus; this.navigation = navigation; this.storagePath = storagePath;
         if (storagePath is not null && File.Exists(storagePath))
         { try { ImportMap(File.ReadAllText(storagePath)); } catch (Exception e) when (e is IOException or JsonException) { result = new(null, 0, 0, "Unknown", "Sparad radiokarta kunde inte läsas. Importera en giltig karta."); } }
         bus.WifiReceived += Wifi; bus.BluetoothReceived += Bluetooth;
