@@ -200,11 +200,13 @@
     "number": 15,
     "commitDateUtc": null,
     "description": "WiFi- och BLE-positionering",
-    "status": "NotStarted",
-    "testResult": "NotRun",
+    "status": "Implemented",
+    "testResult": "200 MSTest passed; Android/Windows 0 errors/warnings; smoke passed.",
     "name": "WiFi- och BLE-positionering",
     "verifiedAtUtc": null,
-    "blockers": [],
+    "blockers": [
+      "Physical fingerprint/beacon reference dataset and field RMSE NotRun."
+    ],
     "latestCommit": "Unknown"
   },
   {

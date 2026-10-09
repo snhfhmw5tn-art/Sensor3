@@ -7,7 +7,8 @@ public sealed class PedestrianPositionEstimator
 {
     private readonly PdrOptions options;
     private readonly List<LocalPoint> path = [];
-    private LocalPoint? position;
+    private LocalPoint? position, rawPosition;
+    private readonly List<LocalPoint> rawPath = [];
     private double walking, running, uncertainty, confidence, lastSeconds = double.NegativeInfinity;
     private double? speed;
     public PedestrianPositionEstimator(PdrOptions? options = null)
@@ -19,7 +20,7 @@ public sealed class PedestrianPositionEstimator
     public void SetStart(double x, double y)
     {
         if (!double.IsFinite(x) || !double.IsFinite(y)) throw new ArgumentOutOfRangeException(nameof(x));
-        position = new(x, y); uncertainty = 0; confidence = 0; path.Clear(); path.Add(position); speed = null;
+        position = rawPosition = new(x, y); rawPath.Clear(); rawPath.Add(rawPosition); uncertainty = 0; confidence = 0; path.Clear(); path.Add(position); speed = null;
     }
     public double Add(StepEvent step, HumanHeading heading)
     {
@@ -34,11 +35,23 @@ public sealed class PedestrianPositionEstimator
         if (position is not null && trusted)
         {
             position = new(position.X + length * Math.Sin(heading.Radians!.Value), position.Y + length * Math.Cos(heading.Radians.Value));
+            rawPosition = new(rawPosition!.X + length * Math.Sin(heading.Radians.Value), rawPosition.Y + length * Math.Cos(heading.Radians.Value));
+            rawPath.Add(rawPosition); if (rawPath.Count > 4000) rawPath.RemoveAt(0);
             path.Add(position); if (path.Count > 4000) path.RemoveAt(0);
         }
         return length;
     }
+    public void Correct(RadioPosition observation)
+    {
+        if (position is null || observation.Point is not { } point || !double.IsFinite(point.X) || !double.IsFinite(point.Y) || !double.IsFinite(observation.Confidence) || observation.Confidence is <= 0 or > 1 || !double.IsFinite(observation.UncertaintyMeters) || observation.UncertaintyMeters <= 0) return;
+        var delta = Math.Sqrt(Math.Pow(position.X - point.X, 2) + Math.Pow(position.Y - point.Y, 2));
+        if (delta > Math.Max(20, uncertainty + observation.UncertaintyMeters)) return;
+        var weight = Math.Clamp(observation.Confidence, .1, .5);
+        position = new(position.X + (point.X - position.X) * weight, position.Y + (point.Y - position.Y) * weight);
+        uncertainty = Math.Max(observation.UncertaintyMeters, uncertainty * (1 - weight));
+        path.Add(position); if (path.Count > 4000) path.RemoveAt(0);
+    }
     public void Stop() { speed = null; confidence = 0; }
     public PositionSnapshot Snapshot() => new(position, walking, running, speed, uncertainty, confidence, path.ToArray(),
-        "Weinberg-baseline: K × amplitud^¼. Kalibrera per person/tempo. Utan riktning hålls XY; osäkerheten växer. Radien är ett heuristiskt mått, inte ett statistiskt konfidensintervall.");
+        "Weinberg-baseline: K × amplitud^¼. Kalibrera per person/tempo. Utan riktning hålls XY; osäkerheten växer. Radien är ett heuristiskt mått, inte ett statistiskt konfidensintervall.", rawPosition, rawPath.ToArray());
 }

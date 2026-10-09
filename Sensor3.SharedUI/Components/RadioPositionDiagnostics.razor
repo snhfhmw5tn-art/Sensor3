@@ -1,0 +1,30 @@
+@implements IDisposable
+@using Sensor3.Contracts
+@inject IServiceProvider Services
+@if (session is not null)
+{
+    <section><h2>WiFi / BLE-referenser</h2>
+        <label>Känd X (m) <input type="number" @bind="x" /></label><label>Y (m) <input type="number" @bind="y" /></label>
+        <button @onclick="Capture">Registrera senaste färska WiFi-scan här</button>
+        <label>BLE identifierare <input @bind="identifier" /></label><label>Osäkerhetsradie (m) <input type="number" @bind="radius" /></label><button @onclick="Beacon">Registrera känt BLE-ankare</button>
+        <p>Registrera bara uppmätta referenspunkter i samma lokala XY-ram som PDR. Radiokartan sparas lokalt på enheten. BSSID och beacon-ID kan vara känsliga.</p>
+        <button @onclick="Export">Visa/exportera karta som JSON</button><button @onclick="Import">Importera JSON nedan</button><textarea @bind="json" rows="5" aria-label="Radiokarta JSON"></textarea>
+        <p>@result?.Source · XY @(result?.Point?.X.ToString("F2") ?? "Unknown"), @(result?.Point?.Y.ToString("F2") ?? "Unknown") · osäkerhet @result?.UncertaintyMeters.ToString("F2") m · kvalitet @result?.Confidence.ToString("F2") · @result?.Detail</p><p role="status">@message</p>
+    </section>
+}
+@code {
+    private IRadioPositionSession? session;
+    private RadioPosition? result;
+    private double x, y, radius = 5;
+    private string identifier = "", json = "", message = "";
+    private bool disposed;
+    private System.Threading.Timer? timer;
+    protected override void OnInitialized() { session = Services.GetService(typeof(IRadioPositionSession)) as IRadioPositionSession; if (session is not null) timer = new(_ => { _ = Refresh(); }, null, 0, 500); }
+    private void Run(Action action) { try { action(); message = "Referenskarta uppdaterad."; } catch (Exception e) when (e is ArgumentException or System.IO.IOException or System.Text.Json.JsonException) { message = e.Message; } }
+    private void Capture() => Run(() => session!.RegisterWifiPoint(x, y));
+    private void Beacon() => Run(() => session!.RegisterBeacon(identifier, x, y, radius));
+    private void Export() => json = session!.ExportMap();
+    private void Import() => Run(() => session!.ImportMap(json));
+    private async Task Refresh() { if (disposed) return; try { await InvokeAsync(() => { if (!disposed) { result = session!.GetRadioPosition(); StateHasChanged(); } }); } catch (ObjectDisposedException) when (disposed) { } catch (TaskCanceledException) when (disposed) { } }
+    public void Dispose() { disposed = true; timer?.Dispose(); }
+}

@@ -7,7 +7,7 @@
       <JavaSdkDirectory Condition="!Exists('$(JavaSdkDirectory)\bin\java.exe') and Exists('$(_Sensor3LocalAppData)\Microsoft\Jdk\bin\java.exe')">$(_Sensor3LocalAppData)\Microsoft\Jdk</JavaSdkDirectory>
     </PropertyGroup>
   </Target>
-  <PropertyGroup><Sensor3BuildNumber Condition="'$(Sensor3BuildNumber)' == ''">14</Sensor3BuildNumber><Sensor3ReleaseChannel Condition="'$(Sensor3ReleaseChannel)' == ''">Development</Sensor3ReleaseChannel></PropertyGroup>
+  <PropertyGroup><Sensor3BuildNumber Condition="'$(Sensor3BuildNumber)' == ''">15</Sensor3BuildNumber><Sensor3ReleaseChannel Condition="'$(Sensor3ReleaseChannel)' == ''">Development</Sensor3ReleaseChannel></PropertyGroup>
   <Target Name="GenerateSensor3BuildInfo" BeforeTargets="AssignTargetPaths" Condition="'$(IsCrossTargetingBuild)' != 'true'">
     <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)tools\Generate-BuildInfo.ps1&quot; -OutputPath &quot;$(MSBuildProjectDirectory)\$(IntermediateOutputPath)build-info.json&quot; -Platform &quot;$(TargetFramework)&quot; -Version &quot;$(Version)&quot; -BuildNumber &quot;$(Sensor3BuildNumber)&quot; -ReleaseChannel &quot;$(Sensor3ReleaseChannel)&quot;" />
     <ItemGroup>

@@ -29,6 +29,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<Sensor3.Contracts.UpdateSessionGuard>();
         builder.Services.AddSingleton<NativeObservationLifetime>();
         builder.Services.AddSingleton<Sensor3.Contracts.NativeObservationBus>();
+        builder.Services.AddSingleton<Sensor3.Contracts.IRadioPositionSession>(x => new Sensor3.Core.RadioPositionSession(x.GetRequiredService<Sensor3.Contracts.NativeObservationBus>(), x.GetRequiredService<Sensor3.Contracts.INavigationSession>(), Path.Combine(FileSystem.AppDataDirectory, "radio-map.json")));
         builder.Services.AddSingleton<Sensor3.Contracts.IForkliftMotionEstimator, Sensor3.Core.VehicleSession>();
         builder.Services.AddSingleton<Sensor3.Contracts.ILocationProvider, NativeLocationProvider>();
         builder.Services.AddSingleton<Sensor3.Contracts.IStepSensorProvider, Sensor3.Sensors.NativeStepSensorProvider>();

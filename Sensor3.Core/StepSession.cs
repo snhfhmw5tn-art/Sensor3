@@ -41,6 +41,7 @@ public sealed class StepSession : IStepSession, ISensorFusionSession, IActivityS
             carryingClassifier.Reset(); carryingContext = carryingContext with { LightLux = null, ProximityMeters = null };
         }
     }
+    public void CorrectPosition(RadioPosition observation) { lock (gate) position.Correct(observation); }
     public PositionSnapshot GetPosition() { lock (gate) return position.Snapshot(); }
     public void SetStartPosition(double x, double y) { lock (gate) position.SetStart(x, y); }
     public StepSnapshot GetSnapshot() { lock (gate) return snapshot; }

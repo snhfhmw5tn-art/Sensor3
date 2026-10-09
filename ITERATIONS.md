@@ -1,6 +1,6 @@
 # Iterationshistorik
 
-Version 0.14.0. Implementerade: 14/18. Verifierade: 0/18. Publicerade: 0/18.
+Version 0.15.0. Implementerade: 15/18. Verifierade: 0/18. Publicerade: 0/18.
 
 | Nr | Namn | Status | Rapport |
 |---|---|---|---|
@@ -18,7 +18,7 @@ Version 0.14.0. Implementerade: 14/18. Verifierade: 0/18. Publicerade: 0/18.
 | 12 | Personens färdriktning oberoende av telefonen | Implemented | [Rapport](docs/iteration-12.md) |
 | 13 | PDR, position och hastighet | Implemented | [Rapport](docs/iteration-13.md) |
 | 14 | Truckkörning och GPS-fusion | Implemented | [Rapport](docs/iteration-14.md) |
-| 15 | WiFi- och BLE-positionering | NotStarted | Återstår |
+| 15 | WiFi- och BLE-positionering | Implemented | [Rapport](docs/iteration-15.md) |
 | 16 | Lagerkarta och kartmatchning | NotStarted | Återstår |
 | 17 | Inspelning, simulering och jämförelse | NotStarted | Återstår |
 | 18 | Slutvalidering, säkerhet och publicering | NotStarted | Återstår |
