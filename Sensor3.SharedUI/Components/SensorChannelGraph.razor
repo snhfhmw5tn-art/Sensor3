@@ -1,0 +1,42 @@
+@using Sensor3.Contracts
+@using System.Globalization
+<figure class="sensor-graph">
+    <figcaption>@Channel [@Unit] · blå: rådata · orange: filtrerat</figcaption>
+    @if (points.Length < 2)
+    {
+        <p>Väntar på minst två grafpunkter.</p>
+    }
+    else
+    {
+        <svg viewBox="0 0 360 110" role="img" aria-label="@($"{SensorName}, kanal {Channel}, {Unit}, {points.Length} punkter")">
+            <title>@SensorName – @Channel (@Unit)</title>
+            <path d="M10 5 V95 H350" fill="none" stroke="currentColor" stroke-opacity="0.35" />
+            <polyline points="@Path(false)" fill="none" stroke="#1976d2" stroke-width="2" />
+            @if (points.Any(x => x.Filtered is not null)) { <polyline points="@Path(true)" fill="none" stroke="#c65b00" stroke-width="2" stroke-dasharray="5 2" /> }
+        </svg>
+        <p>Y: @min.ToString("G4")–@max.ToString("G4") @Unit · X: @points[0].Seconds.ToString("F1")–@points[^1].Seconds.ToString("F1") s från första provet</p>
+    }
+</figure>
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<DiagnosticSample> Samples { get; set; } = [];
+    [Parameter, EditorRequired] public string Channel { get; set; } = "";
+    [Parameter, EditorRequired] public string Unit { get; set; } = "";
+    [Parameter] public string SensorName { get; set; } = "";
+    private (double Seconds, double Raw, double? Filtered)[] points = [];
+    private double min;
+    private double max;
+    protected override void OnParametersSet()
+    {
+        points = Samples.Where(x => x.Raw.Any(v => v.Name == Channel && v.Unit == Unit))
+            .Select(x => (x.Seconds, x.Raw.First(v => v.Name == Channel && v.Unit == Unit).Value, x.Filtered.FirstOrDefault(v => v.Name == Channel && v.Unit == Unit)?.Value)).ToArray();
+        var values = points.SelectMany(x => x.Filtered is { } filtered ? new[] { x.Raw, filtered } : [x.Raw]).ToArray();
+        min = values.Length == 0 ? 0 : values.Min(); max = values.Length == 0 ? 1 : values.Max();
+    }
+    private string Path(bool filtered)
+    {
+        var span = points[^1].Seconds - points[0].Seconds;
+        return string.Join(" ", points.Where(x => !filtered || x.Filtered is not null).Select(x =>
+            (10 + 340 * (x.Seconds - points[0].Seconds) / Math.Max(span, 1e-9)).ToString("F2", CultureInfo.InvariantCulture) + "," +
+            (max == min ? 50 : 95 - 90 * (((filtered ? x.Filtered!.Value : x.Raw) - min) / (max - min))).ToString("F2", CultureInfo.InvariantCulture)));
+    }
+}

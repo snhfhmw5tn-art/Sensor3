@@ -1,0 +1,162 @@
+@implements IAsyncDisposable
+@using Sensor3.Contracts
+@using Sensor3.Sensors
+@inject IServiceProvider Services
+@inject SensorDiagnosticsStore Store
+@inject BuildInfo Build
+<PageTitle>Sensordiagnostik – Sensor 3</PageTitle>
+<h1>Sensordiagnostik</h1>
+@if (Provider is null)
+{
+    <p>Webbläsaren samlar inga rörelsesensorer. Dashboarden visar endast data från native-klienter.</p>
+    @if (snapshot.Client is null)
+    {
+        <p role="status">Väntar på native-klientdata. Klientanslutning implementeras i iteration 07.</p>
+        <p>Klientversion: Unknown · iteration: Unknown · commit: Unknown</p>
+    }
+}
+else
+{
+    <p>Inventera och välj sensorer. Insamlingen stoppas när sidan lämnas eller appen tappar fokus/går till bakgrunden. Återstart sker manuellt.</p>
+    <div class="diagnostic-controls">
+        <label>Önskad frekvens (1–200 Hz) <input type="number" min="1" max="200" @bind="frequency" disabled="@(busy || Provider.IsRunning)" /></label>
+        <button disabled="@(busy || Provider.IsRunning)" @onclick="Discover">Inventera</button>
+        <button disabled="@(busy || Provider.IsRunning || selected.Count == 0 || snapshot.Sensors.Any(x => selected.Contains(x.Descriptor.Id) && x.Descriptor.Status != SensorStatus.Available))" @onclick="Start">Starta</button>
+        <button disabled="@(busy || !Provider.IsRunning)" @onclick="Stop">Stoppa</button>
+        @if (PermissionService is not null)
+        {
+            <button disabled="@(busy || Provider.IsRunning || selected.Count == 0)" @onclick="RequestPermissions">Begär behörighet för valda sensorer</button>
+        }
+    </div>
+    <p role="status">@message</p>
+}
+@if (snapshot.Client is { } client)
+{
+    <dl class="diagnostic-client">
+        <dt>Native-klient</dt><dd>@client.Id (@client.Platform)</dd>
+        <dt>Klientversion / build</dt><dd>@client.Build.ApplicationVersion / @client.Build.BuildNumber</dd>
+        <dt>Iteration implementerad / verifierad / publicerad</dt><dd>@client.Build.LatestImplementedIteration / @client.Build.LatestVerifiedIteration / @client.Build.LatestPublishedIteration</dd>
+        <dt>Klientens commit</dt><dd>@client.Build.GitCommitHash</dd>
+        <dt>Commitdatum</dt><dd>@Sensor3.Core.BuildMetadata.SwedishTime(client.Build.GitCommitDateUtc)</dd>
+    </dl>
+}
+<p>Status skiljer tillgänglighet från aktivitet. Active kräver ett mottaget giltigt prov. Stale betyder att en kontinuerlig sensor inte levererar i tid; händelsestyrda sensorer kan vara tysta utan fel.</p>
+<p>Rådata är native-värden i normaliserade enheter. Filtrerade data använder exponentiell utjämning (tidskonstant @Store.Options.FilterTimeConstant.TotalMilliseconds.ToString("F0") ms) för diagnostik av kontinuerlig acceleration, gyro, magnetfält, tryck, ljus och höjd. Filtret används inte för positionering. Orientering, kategorier och steghändelser filtreras inte.</p>
+<p>Faktisk Hz beräknas från native tidsstämplar. Grafer visar högst @((1 / Store.Options.ChartInterval.TotalSeconds).ToString("F0")) prov per sekund och sparar högst @Store.Options.HistoryCapacity punkter per sensor; alla giltiga prov räknas. Varje kanal har egen skala. Referensramarna har inte förenats.</p>
+@if (snapshot.Sensors.Count == 0)
+{
+    <p>Inga native-sensordata mottagna.</p>
+}
+@foreach (var sensor in snapshot.Sensors)
+{
+    var descriptor = sensor.Descriptor;
+    var statistics = nativeStatistics.FirstOrDefault(x => x.SensorId == descriptor.Id);
+    <article class="sensor-diagnostic" @key="descriptor.Id">
+        <h2>@descriptor.Name</h2>
+        @if (Provider is not null)
+        {
+            <label><input type="checkbox" checked="@selected.Contains(descriptor.Id)" disabled="@(busy || Provider.IsRunning || descriptor.Status is SensorStatus.Unsupported or SensorStatus.Error)" @onchange="e => Select(descriptor.Id, e.Value is true)" /> Välj sensor</label>
+        }
+        <dl>
+            <dt>Beskrivning / typ</dt><dd>@sensor.Description (@descriptor.Kind)</dd>
+            <dt>Tillverkare</dt><dd>@(string.IsNullOrWhiteSpace(descriptor.Vendor) ? "Unknown" : descriptor.Vendor)</dd>
+            <dt>Native ID</dt><dd>@(string.IsNullOrEmpty(descriptor.NativeId) ? "Unknown" : descriptor.NativeId)</dd>
+            <dt>Tillgänglighet</dt><dd>@descriptor.Status · @descriptor.Detail</dd>
+            <dt>Behörighet</dt><dd>@sensor.Permission</dd>
+            <dt>Aktivitet / diagnostikstatus</dt><dd class="sensor-status">@sensor.Status</dd>
+            <dt>Användning i beräkningar</dt><dd>@sensor.CalculationUsage · används: @(sensor.UsedByPositioning ? "Ja" : "Nej")</dd>
+            <dt>Rapporteringsläge / maximal native Hz</dt><dd>@descriptor.Capability.ReportingMode / @Number(descriptor.Capability.MaximumFrequencyHz)</dd>
+            <dt>Begärd / faktisk Hz</dt><dd>@Number(sensor.RequestedFrequencyHz) / @Number(statistics?.ActualFrequencyHz ?? sensor.ActualFrequencyHz)</dd>
+            <dt>Giltiga / avvisade prov</dt><dd>@sensor.Count / @(sensor.RejectedCount + (statistics?.RejectedCount ?? 0))</dd>
+            <dt>Senast mottaget för</dt><dd>@(sensor.LastReceivedAge is { } age ? $"{age.TotalSeconds:F1} s sedan" : "Unknown")</dd>
+            <dt>Fel</dt><dd>@(sensor.Error ?? (sensor.Status == SensorDiagnosticStatus.Stale ? $"Inga nya giltiga prov inom {Store.Options.StaleAfter.TotalSeconds:F1} sekunder." : "Inget rapporterat fel"))</dd>
+        </dl>
+        @if (sensor.Latest is { } reading)
+        {
+            <p>Tidsstämpel: @(reading.MonotonicTimestampNanoseconds?.ToString() ?? reading.TimestampUtc?.ToString("O")) · @reading.TimestampSource</p>
+            <p>Mottaget UTC: @reading.ReceivedAtUtc.ToString("O") · datakvalitet: @reading.Quality · referensram: @reading.CoordinateFrame</p>
+            <table><thead><tr><th>Kanal (X/Y/Z där tillämpligt)</th><th>Rådata</th><th>Filtrerade data</th><th>Enhet</th></tr></thead><tbody>
+            @foreach (var value in reading.Values)
+            {
+                var filtered = sensor.Filtered.FirstOrDefault(x => x.Name == value.Name && x.Unit == value.Unit);
+                <tr><td>@value.Name</td><td>@value.Value.ToString("G6")</td><td>@(filtered?.Value.ToString("G6") ?? "Ej tillämpligt")</td><td>@value.Unit</td></tr>
+            }
+            </tbody></table>
+            @foreach (var value in reading.Values)
+            {
+                <SensorChannelGraph Samples="sensor.History" Channel="@value.Name" Unit="@value.Unit" SensorName="@descriptor.Name" />
+            }
+        }
+        else { <p>Inga mätvärden. Datakvalitet och tidsstämpel: Unknown.</p> }
+    </article>
+}
+@code {
+    private ISensorProvider? Provider => Services.GetService(typeof(ISensorProvider)) as ISensorProvider;
+    private ISensorPermissionService? PermissionService => Services.GetService(typeof(ISensorPermissionService)) as ISensorPermissionService;
+    private SensorDiagnosticsSnapshot snapshot = new(null, []);
+    private IReadOnlyList<SensorStatistics> nativeStatistics = [];
+    private readonly HashSet<string> selected = [];
+    private string message = "Inte startad";
+    private double frequency = 50;
+    private bool busy;
+    private volatile bool disposed;
+    private System.Threading.Timer? refresh;
+    protected override async Task OnInitializedAsync()
+    {
+        if (Provider is { } provider)
+        {
+            provider.ReadingReceived += Store.Receive;
+            provider.StateChanged += Store.SetState;
+            await Discover();
+        }
+        else snapshot = Store.GetSnapshot();
+        refresh = new(_ => { if (!disposed) _ = InvokeAsync(Refresh); }, null, 200, 200);
+    }
+    private void Refresh()
+    {
+        if (disposed) return;
+        snapshot = Store.GetSnapshot();
+        nativeStatistics = Provider?.GetStatistics() ?? [];
+        StateHasChanged();
+    }
+    private static string Number(double? number) => number?.ToString("F2") ?? "Unknown";
+    private void Select(string id, bool value) { if (value) selected.Add(id); else selected.Remove(id); }
+    private Task Discover() => Run(async () => { await LoadCatalogue(); selected.Clear(); message = "Inventering klar. Välj sensorer."; });
+    private async Task LoadCatalogue()
+    {
+        var catalogue = await Provider!.DiscoverAsync();
+        Store.SetClient(new("local-native", Build.TargetPlatform.Contains("android", StringComparison.OrdinalIgnoreCase) ? ClientPlatform.Android : ClientPlatform.Windows, Build), catalogue);
+        nativeStatistics = [];
+    }
+    private Task Start() => Run(async () =>
+    {
+        var ids = selected.ToArray();
+        Store.BeginSession(ids, frequency);
+        try { await Provider!.StartAsync(ids, new() { FrequencyHz = frequency }); }
+        catch (Exception exception) { foreach (var id in ids) Store.SetState(new(id, SensorStatus.Error, exception.Message)); throw; }
+        message = "Insamling pågår";
+    });
+    private Task Stop() => Run(async () => { await Provider!.StopAsync(); message = "Insamling stoppad"; });
+    private Task RequestPermissions() => Run(async () =>
+    {
+        await PermissionService!.RequestAsync(snapshot.Sensors.Where(x => selected.Contains(x.Descriptor.Id)).Select(x => x.Descriptor).ToArray());
+        await LoadCatalogue();
+        message = "Behörighetskontroll klar. Nekade sensorer visas som PermissionDenied.";
+    });
+    private async Task Run(Func<Task> action)
+    {
+        busy = true;
+        try { await action(); }
+        catch (Exception exception) { message = "Åtgärden misslyckades: " + exception.Message; }
+        finally { busy = false; snapshot = Store.GetSnapshot(); }
+    }
+    public async ValueTask DisposeAsync()
+    {
+        disposed = true;
+        if (refresh is not null) await refresh.DisposeAsync();
+        if (Provider is not { } provider) return;
+        // Keep subscribed through stop so retained diagnostic data gets an accurate Inactive status.
+        try { await provider.StopAsync(); }
+        finally { provider.ReadingReceived -= Store.Receive; provider.StateChanged -= Store.SetState; }
+    }
+}

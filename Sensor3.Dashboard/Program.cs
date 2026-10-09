@@ -12,6 +12,9 @@ builder.Services.AddRazorComponents()
 builder.Services.AddSingleton(Sensor3.Core.BuildMetadata.Load(typeof(Program).Assembly));
 builder.Services.AddSingleton(Sensor3.Core.BuildMetadata.LoadIterations(typeof(Program).Assembly));
 builder.Services.AddHealthChecks();
+// Per-circuit receiver: browser sensors and fabricated client identities are never registered.
+builder.Services.AddScoped<Sensor3.Sensors.SensorDiagnosticsStore>();
+builder.Services.AddScoped<Sensor3.Contracts.ISensorDiagnosticsReceiver>(x => x.GetRequiredService<Sensor3.Sensors.SensorDiagnosticsStore>());
 var app = builder.Build();
 app.MapHealthChecks("/health");
 

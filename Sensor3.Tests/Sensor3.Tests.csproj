@@ -18,7 +18,12 @@
   <ItemGroup>
     <ProjectReference Include="..\Sensor3.Core\Sensor3.Core.csproj" />
     <ProjectReference Include="..\Sensor3.Sensors\Sensor3.Sensors.csproj" />
+    <ProjectReference Include="..\Sensor3.SharedUI\Sensor3.SharedUI.csproj" />
     <ProjectReference Include="..\Sensor3.Distribution\Sensor3.Distribution.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
 </Project>

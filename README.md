@@ -6,7 +6,7 @@ Installera även MAUI-komponentgrupperna Android, Windows, Blazor och Shared som
 
 Byggkonfigurationen hittar även lokalt installerad Android SDK i `%LOCALAPPDATA%\Android\Sdk` och Java i `%LOCALAPPDATA%\Microsoft\Jdk` när inga explicita SDK-sökvägar har angetts. Befintliga explicita sökvägar har företräde.
 
-Native Android/Windows-klient, ASP.NET Core API och Blazor-dashboard, .NET 10 / C# 14. Version 0.4.0. Arbetet följer [masterplanen](docs/MASTERPLAN.md), en iteration i taget.
+Native Android/Windows-klient, ASP.NET Core API och Blazor-dashboard, .NET 10 / C# 14. Version 0.5.0. Arbetet följer [masterplanen](docs/MASTERPLAN.md), en iteration i taget.
 
 ## Bygg och kör
 
@@ -54,3 +54,8 @@ Kontrollerat lokalt 2026-10-09: Android SDK med workload 36.1.43, Microsoft Open
 Öppna **Sensorinsamling** (`/sensors`) i Android- eller Windows-appen, inventera och välj sensorer. Begär vid behov behörighet för valda Android-sensorer och tryck Starta. Standard är 50 Hz; 1–200 Hz kan begäras. OS/driver bestämmer faktisk takt, som beräknas från de mottagna sensorernas egna tidsstämplar. Saknad hårdvara visas som Unsupported, utan exempelvärden. Stoppa avslutar sessionen. Insamlingen stoppas också när sidan lämnas eller appen tappar fokus/går till bakgrunden; återstart är manuell.
 
 Rådata visas lokalt och skickas inte till servern. Webbläsaren erbjuder ingen sensorinsamling. Normaliserade enheter och native tidskällor bevaras; olika referensramar har ännu inte förenats. Full sensordiagnostik hör till iteration 05. Se [iteration 04](docs/iteration-04.md) för kontroller, berörda filer och kvarvarande hårdvaruprov. Status är Implemented; ingen klientrelease har publicerats.
+## Sensordiagnostik – iteration 05
+
+Öppna `/diagnostics` (även `/sensors`) i native-appen. Alla inventerade sensorer visas med tillverkare eller Unknown, tillgänglighet, behörighet, aktivitet, kvalitet, fel, frekvens och tidsstämpel. Grafer och kanaltabeller visar råa normaliserade värden och diagnostisk exponentiell utjämning där det är tillämpligt. Ingen positioneringsalgoritm är aktiv ännu.
+
+Blazor-dashboarden har samma mottagarvy, utan egen sensorinsamling. Klientmetadata visas som Unknown tills en native-klient har levererat data via mottagarkontraktet; faktisk nätverksanslutning tillkommer i iteration 07. Se [iteration 05](docs/iteration-05.md) för statusmodell, filtermetod, tester och hårdvarubegränsningar. Status är Implemented, inte Verified eller Released.

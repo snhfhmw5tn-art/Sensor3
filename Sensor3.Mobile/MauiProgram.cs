@@ -23,11 +23,14 @@ public static class MauiProgram
         builder.Services.AddSingleton<Sensor3.Contracts.UpdateSessionGuard>();
 #if ANDROID
         builder.Services.AddSingleton<Sensor3.Sensors.ISensorBackend, AndroidSensorBackend>();
-        builder.Services.AddSingleton<Sensor3.Contracts.ISensorPermissionService, AndroidSensorPermissions>();
+        builder.Services.AddSingleton<AndroidSensorPermissions>();
+        builder.Services.AddSingleton<Sensor3.Contracts.ISensorPermissionService>(x => x.GetRequiredService<AndroidSensorPermissions>());
 #else
         builder.Services.AddSingleton<Sensor3.Sensors.ISensorBackend, WindowsSensorBackend>();
 #endif
         builder.Services.AddSingleton<Sensor3.Contracts.ISensorProvider, Sensor3.Sensors.SensorProvider>();
+        builder.Services.AddSingleton<Sensor3.Sensors.SensorDiagnosticsStore>();
+        builder.Services.AddSingleton<Sensor3.Contracts.ISensorDiagnosticsReceiver>(x => x.GetRequiredService<Sensor3.Sensors.SensorDiagnosticsStore>());
         builder.Services.AddSingleton<Sensor3.Contracts.IUpdateSessionGuard>(x => x.GetRequiredService<Sensor3.Contracts.UpdateSessionGuard>());
         builder.Services.AddSingleton<Sensor3.Contracts.IUpdateInstaller, NativeUpdateInstaller>();
         builder.Services.AddSingleton<Sensor3.Contracts.IApplicationUpdateService>(x => new Sensor3.Core.ApplicationUpdateService(

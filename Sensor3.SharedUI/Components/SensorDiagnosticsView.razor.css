@@ -1,0 +1,9 @@
+.sensor-diagnostic { border: 1px solid #b5bbc2; border-radius: 6px; padding: 1rem; margin: 1rem 0; overflow-wrap: anywhere; }
+.sensor-diagnostic dl, .diagnostic-client { display: grid; grid-template-columns: minmax(10rem, 1fr) minmax(0, 3fr); gap: .4rem 1rem; }
+.sensor-diagnostic dt, .diagnostic-client dt { font-weight: 600; }
+.sensor-diagnostic dd, .diagnostic-client dd { margin: 0; }
+.sensor-diagnostic table { width: 100%; }
+.sensor-diagnostic th, .sensor-diagnostic td { text-align: left; padding: .4rem; }
+.diagnostic-controls { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+.sensor-status { font-weight: bold; }
+@media (max-width: 600px) { .sensor-diagnostic dl, .diagnostic-client { grid-template-columns: 1fr; } .sensor-diagnostic dd { margin-bottom: .6rem; } }

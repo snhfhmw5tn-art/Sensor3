@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Sensor3.Core\Sensor3.Core.csproj" />
+    <ProjectReference Include="..\Sensor3.Sensors\Sensor3.Sensors.csproj" />
   </ItemGroup>
 
 </Project>

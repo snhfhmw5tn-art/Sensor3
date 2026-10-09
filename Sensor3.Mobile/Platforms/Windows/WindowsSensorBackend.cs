@@ -91,7 +91,7 @@ public sealed class WindowsSensorBackend(ILogger<WindowsSensorBackend> logger) :
     {
         try
         {
-                foreach (var device in await DeviceInformation.FindAllAsync(selector))
+                foreach (var device in await DeviceInformation.FindAllAsync(selector, new[] { "System.Devices.Manufacturer" }))
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 if (typeof(TSensor) == typeof(CustomSensor) && nativeIds.Contains(device.Id)) continue;
@@ -99,10 +99,10 @@ public sealed class WindowsSensorBackend(ILogger<WindowsSensorBackend> logger) :
                 try
                 {
                     var sensor = await open(device.Id);
-                    if (sensor is null) { catalogue.Add(new(id, device.Id, device.Name, "Windows driver", kind, new(mode), SensorStatus.Unsupported, "Drivrutinen exponeras men kan inte öppnas med detta sensor-API.")); continue; }
+                    if (sensor is null) { catalogue.Add(new(id, device.Id, device.Name, Manufacturer(device), kind, new(mode), SensorStatus.Unsupported, "Drivrutinen exponeras men kan inte öppnas med detta sensor-API.")); continue; }
                     nativeIds.Add(device.Id);
                     var min = minimum(sensor);
-                    catalogue.Add(new(id, device.Id, device.Name, "Windows driver", kind, new(mode, min > 0 ? 1000.0 / min : null), SensorStatus.Available));
+                    catalogue.Add(new(id, device.Id, device.Name, Manufacturer(device), kind, new(mode, min > 0 ? 1000.0 / min : null), SensorStatus.Available));
                     sources[id] = (options, reading, state) =>
                     {
                         var subscription = new Subscription<TSensor, TArgs>(sensor, detach);
@@ -119,7 +119,7 @@ public sealed class WindowsSensorBackend(ILogger<WindowsSensorBackend> logger) :
                     };
                 }
                 catch (Exception exception) when (exception is not OperationCanceledException)
-                { logger.LogWarning(exception, "Sensor {Sensor} kunde inte öppnas", id); catalogue.Add(new(id, device.Id, device.Name, "Windows driver", kind, new(mode), exception is UnauthorizedAccessException ? SensorStatus.PermissionRequired : SensorStatus.Error, exception.Message)); }
+                { logger.LogWarning(exception, "Sensor {Sensor} kunde inte öppnas", id); catalogue.Add(new(id, device.Id, device.Name, Manufacturer(device), kind, new(mode), exception is UnauthorizedAccessException ? SensorStatus.PermissionRequired : SensorStatus.Error, exception.Message)); }
             }
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
@@ -135,7 +135,7 @@ public sealed class WindowsSensorBackend(ILogger<WindowsSensorBackend> logger) :
             {
                 var id = "windows:Altimeter:" + sensor.DeviceId;
                 nativeIds.Add(sensor.DeviceId);
-                catalogue.Add(new(id, sensor.DeviceId, "Altimeter", "Windows driver", SensorKind.Altimeter, new(SensorReportingMode.Continuous, sensor.MinimumReportInterval > 0 ? 1000.0 / sensor.MinimumReportInterval : null), SensorStatus.Available));
+                catalogue.Add(new(id, sensor.DeviceId, "Altimeter", "Unknown", SensorKind.Altimeter, new(SensorReportingMode.Continuous, sensor.MinimumReportInterval > 0 ? 1000.0 / sensor.MinimumReportInterval : null), SensorStatus.Available));
                 sources[id] = (options, reading, _) =>
                 {
                     var subscription = new Subscription<Altimeter, AltimeterReadingChangedEventArgs>(sensor, (x, h) => x.ReadingChanged -= h);
@@ -155,6 +155,8 @@ public sealed class WindowsSensorBackend(ILogger<WindowsSensorBackend> logger) :
         if (!sources.TryGetValue(descriptor.Id, out var start)) throw new InvalidOperationException("Sensorn är inte tillgänglig.");
         return Task.FromResult(start(options, reading, state));
     }
+    private static string Manufacturer(DeviceInformation device) =>
+        device.Properties.TryGetValue("System.Devices.Manufacturer", out var value) && value is string name && !string.IsNullOrWhiteSpace(name) ? name : "Unknown";
     private static SensorValue[] Vector(string unit, double x, double y, double z) => [new("x", x, unit), new("y", y, unit), new("z", z, unit)];
     private static Reading R(SensorKind kind, DateTimeOffset timestamp, IReadOnlyList<SensorValue> values, SensorQuality quality = SensorQuality.Unknown) =>
         new("", kind, values, null, timestamp.ToUniversalTime(), DateTimeOffset.UtcNow, SensorTimestampSource.WindowsUtc, quality, "Windows native device/reference frame; no cross-platform frame conversion");

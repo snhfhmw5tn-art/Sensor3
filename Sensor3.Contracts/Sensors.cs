@@ -1,7 +1,7 @@
 namespace Sensor3.Contracts;
 
 public enum SensorKind { Accelerometer, Gyroscope, Gravity, LinearAcceleration, Magnetometer, RotationVector, Orientation, Barometer, StepDetector, StepCounter, Light, Proximity, Altimeter, Activity, HingeAngle, Other }
-public enum SensorStatus { Unsupported, Available, PermissionRequired, Running, Stopped, Interrupted, Error }
+public enum SensorStatus { Unsupported, Available, PermissionRequired, Running, Stopped, Interrupted, Error, PermissionDenied }
 public enum SensorQuality { Unknown, Unreliable, Low, Medium, High }
 public enum SensorReportingMode { Continuous, OnChange, OneShot, SpecialTrigger }
 public enum SensorTimestampSource { AndroidElapsedRealtime, WindowsUtc }

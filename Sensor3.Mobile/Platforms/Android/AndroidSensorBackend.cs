@@ -8,7 +8,7 @@ using SensorStatusAndroid = Android.Hardware.SensorStatus;
 
 namespace Sensor3;
 
-public sealed class AndroidSensorBackend(ILogger<AndroidSensorBackend> logger) : ISensorBackend
+public sealed class AndroidSensorBackend(ILogger<AndroidSensorBackend> logger, AndroidSensorPermissions permissions) : ISensorBackend
 {
     private readonly SensorManager manager = (SensorManager)Android.App.Application.Context.GetSystemService(Android.Content.Context.SensorService)!;
     private readonly Dictionary<string, Sensor> native = [];
@@ -28,7 +28,8 @@ public sealed class AndroidSensorBackend(ILogger<AndroidSensorBackend> logger) :
             var mode = (int)sensor.ReportingMode switch { 1 => ReportingMode.OnChange, 2 => ReportingMode.OneShot, 3 => ReportingMode.SpecialTrigger, _ => ReportingMode.Continuous };
             found.Add(new(id, sensor.StringType ?? type.ToString(), sensor.Name ?? id, sensor.Vendor ?? "Unknown", Kind(type),
                 new(mode, sensor.MinDelay > 0 ? 1_000_000.0 / sensor.MinDelay : null, permission is not null),
-                permitted ? SensorStatus.Available : SensorStatus.PermissionRequired, permitted ? null : "Behörighet krävs: " + permission));
+                permitted ? SensorStatus.Available : permissions.WasDenied(permission!) ? SensorStatus.PermissionDenied : SensorStatus.PermissionRequired,
+                permitted ? null : (permissions.WasDenied(permission!) ? "Behörighet nekad: " : "Behörighet krävs: ") + permission));
         }
         logger.LogInformation("Android exponerar {Count} sensorer", found.Count);
         return Task.FromResult<IReadOnlyList<SensorDescriptor>>(found);

@@ -1,0 +1,4 @@
+.sensor-graph { margin: 1rem 0; max-width: 48rem; }
+svg { width: 100%; height: auto; display: block; }
+figcaption { font-weight: 600; }
+p { margin: .25rem 0; font-size: .9rem; }
