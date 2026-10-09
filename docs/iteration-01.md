@@ -47,3 +47,5 @@ Kontroll genomförd i C:\Users\boris.gasic\source\repos\snhfhmw5tn-art\Sensor3 e
 - `adb devices`: ingen ansluten enhet. Status kvarstår Implemented, inte Verified.
 
 Denna komplettering ersätter den tidigare uppgiften om att Android-byggstödet saknas.
+
+Funktionstest och CSS-rättning: se [valideringsrapport](validation-iteration-01.md). Windows-start och dashboardnavigation är kontrollerade; manuella native-kontroller återstår.
