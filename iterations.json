@@ -158,7 +158,7 @@
   },
   {
     "number": 12,
-    "commitDateUtc": null,
+    "commitDateUtc": "2026-10-09T18:22:11+02:00",
     "description": "Personens färdriktning oberoende av telefonen",
     "status": "Implemented",
     "testResult": "186 passed, 0 failed, 0 skipped; Android + Windows VS MSBuild: 0 errors, 0 warnings; HTTP smoke; synthetic phone/body angle 5-180 degrees/carry/curve regressions passed",
@@ -168,7 +168,7 @@
       "No measured labeled heading recordings; physical angle/carry/curve validation pending",
       "Gait-phase and native attitude assumptions are unvalidated; uncertainty is heuristic"
     ],
-    "latestCommit": "Unknown"
+    "latestCommit": "a08be749b12e2329d0d0242d6626ccc765a9d638"
   },
   {
     "number": 13,
