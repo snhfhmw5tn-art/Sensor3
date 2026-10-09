@@ -32,4 +32,4 @@ Kryptografisk paketsignatur och metadata/identitet inuti APK/MSIX verifieras int
 
 ASP.NET:s officiella riktlinjer har använts för [filuppladdning](https://learn.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-10.0), [CSRF](https://learn.microsoft.com/en-us/aspnet/core/security/anti-request-forgery) och [Blazor-autentisering](https://learn.microsoft.com/en-us/aspnet/core/blazor/security/?view=aspnetcore-10.0).
 
-Implementationscommit och dess verkliga UTC-datum registreras i iterations.json efter implementationscommitten. Varje bygge bäddar in den exakta byggda HEAD-committen separat.
+Implementationscommit: `bdefc4b1a3d772472198afe8143f0119e4c28281`, verkligt commitdatum `2026-10-09T12:52:23Z` (14:52:23 svensk tid). Registrerat i iterations.json efter implementationscommitten. Varje bygge bäddar in den exakta byggda HEAD-committen separat.

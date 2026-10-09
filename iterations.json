@@ -15,14 +15,14 @@
   },
   {
     "number": 2,
-    "commitDateUtc": null,
+    "commitDateUtc": "2026-10-09T12:52:23Z",
     "description": "Webbportal för installation och versionshantering",
     "status": "Implemented",
     "testResult": "37 passed, 0 failed, 0 skipped (MSTest); 26 HTTP distribution/security checks passed; Android + Windows VS MSBuild succeeded without errors/warnings; desktop browser and mobile-width portal checked",
     "name": "Webbportal för installation och versionshantering",
     "verifiedAtUtc": null,
     "blockers": ["Physical Android browser not verified", "Signed package installation/publication validation remains in iteration 03; no actual release published"],
-    "latestCommit": "Unknown"
+    "latestCommit": "bdefc4b1a3d772472198afe8143f0119e4c28281"
   },
   {
     "number": 3,
