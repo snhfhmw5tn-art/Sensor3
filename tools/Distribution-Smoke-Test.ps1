@@ -67,14 +67,14 @@ try {
     $csrf = Token $admin.Content
     Check ((Request '/admin/releases/publish' 'POST' $session).StatusCode -eq 400) 'Publication requires CSRF'
     $manifest = @{
-        platform='Android'; channel='Development'; version='0.6.0'; buildNumber=6; iterationNumber=1
+        platform='Android'; channel='Development'; version='0.7.0'; buildNumber=7; iterationNumber=1
         gitCommitHash=(& git -C $root rev-parse HEAD).Trim(); gitCommitDateUtc=(& git -C $root show -s --format=%cI HEAD).Trim()
         releaseNotes='Debug-signed HTTP test fixture; not a production release'; expectedSha256=(Get-FileHash $package -Algorithm SHA256).Hash.ToLowerInvariant()
         compatibility=@{minimumServerVersion='0.2.0'}; updatePolicy=@{mandatory=$true}
     } | ConvertTo-Json -Depth 4
     $form = @{manifest=$manifest;artifact=Get-Item $package;__RequestVerificationToken=$csrf}
     $wrongVersion = $manifest | ConvertFrom-Json
-    $wrongVersion.buildNumber = 7
+    $wrongVersion.buildNumber = 8
     Check ((Request '/admin/releases/publish' 'POST' $session $null @{manifest=($wrongVersion | ConvertTo-Json -Depth 4);artifact=Get-Item $package;__RequestVerificationToken=$csrf}).StatusCode -eq 400) 'Embedded version mismatch denied'
     $unsigned = Join-Path $testRoot 'unsigned.apk'
     $archive = [IO.Compression.ZipFile]::Open($unsigned,[IO.Compression.ZipArchiveMode]::Create)
@@ -84,7 +84,7 @@ try {
     Check ((Request '/admin/releases/publish' 'POST' $session $null @{manifest=($unsignedManifest | ConvertTo-Json -Depth 4);artifact=Get-Item $unsigned;__RequestVerificationToken=$csrf}).StatusCode -eq 400) 'Unsigned APK denied'
     Check ((Request '/admin/releases/publish' 'POST' $session $null $form).StatusCode -eq 302) 'Publish signature-verified debug APK to temporary catalogue'
     $latest = Invoke-RestMethod 'http://127.0.0.1:5303/api/releases/latest?platform=Android&channel=Development'
-    Check ($latest.manifest.version -eq '0.6.0') 'Shared API catalogue'
+    Check ($latest.manifest.version -eq '0.7.0') 'Shared API catalogue'
     $nonce = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
     $signed = Invoke-RestMethod "http://127.0.0.1:5303/api/updates/authenticated?platform=Android&channel=Development&version=0.1.0&buildNumber=1&nonce=$nonce"
     $payload = [Convert]::FromBase64String($signed.payload)

@@ -11,7 +11,7 @@
     <p>Webbläsaren samlar inga rörelsesensorer. Dashboarden visar endast data från native-klienter.</p>
     @if (snapshot.Client is null)
     {
-        <p role="status">Väntar på native-klientdata. Klientanslutning implementeras i iteration 07.</p>
+        <p role="status">Väntar på native-klientdata. Logga in som administratör för att välja en ansluten enhet.</p>
         <p>Klientversion: Unknown · iteration: Unknown · commit: Unknown</p>
     }
 }
@@ -91,6 +91,8 @@ else
     </article>
 }
 <RadioDiagnostics />
+<TelemetryControls />
+<RemoteDiagnostics />
 @code {
     private ISensorProvider? Provider;
     private ISensorPermissionService? PermissionService;

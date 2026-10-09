@@ -12,4 +12,5 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup><ProjectReference Include="..\Sensor3.Infrastructure\Sensor3.Infrastructure.csproj" /></ItemGroup>
 </Project>

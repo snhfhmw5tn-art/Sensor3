@@ -6,12 +6,13 @@ public partial class App : Application
     private readonly Microsoft.Extensions.Logging.ILogger<App> logger;
     private readonly Sensor3.Contracts.ISensorProvider sensors;
     private readonly NativeObservationLifetime observations;
-    public App(Sensor3.Contracts.IApplicationUpdateService updates, Microsoft.Extensions.Logging.ILogger<App> logger, Sensor3.Contracts.ISensorProvider sensors, NativeObservationLifetime observations)
+    private readonly Sensor3.Contracts.ITelemetryClient telemetry;
+    public App(Sensor3.Contracts.IApplicationUpdateService updates, Microsoft.Extensions.Logging.ILogger<App> logger, Sensor3.Contracts.ISensorProvider sensors, NativeObservationLifetime observations, Sensor3.Contracts.ITelemetryClient telemetry)
     {
         this.updates = updates;
         this.logger = logger;
         this.sensors = sensors;
-        this.observations = observations;
+        this.observations = observations; this.telemetry = telemetry;
         InitializeComponent();
     }
 
@@ -31,7 +32,7 @@ public partial class App : Application
     private async Task StopSensorsAsync()
     {
         observations.CancelActive();
-        try { await sensors.StopAsync(); }
+        try { await sensors.StopAsync(); await telemetry.DisconnectAsync(); }
         catch (Exception exception) { Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger, exception, "Sensorinsamling kunde inte stoppas vid appavbrott"); }
     }
 }

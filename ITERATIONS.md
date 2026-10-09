@@ -1,30 +1,28 @@
 # Iterationshistorik
 
-Version 0.6.0. Implementerade: 6/18. Verifierade: 0/18. Publicerade: 0/18.
+Version 0.7.0. Implementerade: 7/18. Verifierade: 0/18. Publicerade: 0/18.
 
-| Nr | Namn | Status |
-|---|---|---|
-| 01 | Grundplattform, Git och versionsinformation | Implemented |
-| 02 | Webbportal för installation och versionshantering | Implemented |
-| 03 | Android APK, Windows MSIX och uppdateringar | Implemented |
-| 04 | Native sensorinsamling | Implemented |
-| 05 | Komplett sensordiagnostik | Implemented |
-| 06 | GPS, WiFi och Bluetooth | Implemented |
-| 07 | Realtidskommunikation | NotStarted |
-| 08 | Stegräknaren från Sensor App 2 | NotStarted |
-| 09 | Koordinattransformation och sensorfusion | NotStarted |
-| 10 | Aktivitetsigenkänning | NotStarted |
-| 11 | Dynamisk bärpositionsklassificering | NotStarted |
-| 12 | Personens färdriktning oberoende av telefonen | NotStarted |
-| 13 | PDR, position och hastighet | NotStarted |
-| 14 | Truckkörning och GPS-fusion | NotStarted |
-| 15 | WiFi- och BLE-positionering | NotStarted |
-| 16 | Lagerkarta och kartmatchning | NotStarted |
-| 17 | Inspelning, simulering och jämförelse | NotStarted |
-| 18 | Slutvalidering, säkerhet och publicering | NotStarted |
+| Nr | Namn | Status | Rapport |
+|---|---|---|---|
+| 01 | Grundplattform, Git och versionsinformation | Implemented | [Rapport](docs/iteration-01.md) |
+| 02 | Webbportal för installation och versionshantering | Implemented | [Rapport](docs/iteration-02.md) |
+| 03 | Android APK, Windows MSIX och uppdateringar | Implemented | [Rapport](docs/iteration-03.md) |
+| 04 | Native sensorinsamling | Implemented | [Rapport](docs/iteration-04.md) |
+| 05 | Komplett sensordiagnostik | Implemented | [Rapport](docs/iteration-05.md) |
+| 06 | GPS, WiFi och Bluetooth | Implemented | [Rapport](docs/iteration-06.md) |
+| 07 | Realtidskommunikation | Implemented | [Rapport](docs/iteration-07.md) |
+| 08 | Stegräknaren från Sensor App 2 | NotStarted | Återstår |
+| 09 | Koordinattransformation och sensorfusion | NotStarted | Återstår |
+| 10 | Aktivitetsigenkänning | NotStarted | Återstår |
+| 11 | Dynamisk bärpositionsklassificering | NotStarted | Återstår |
+| 12 | Personens färdriktning oberoende av telefonen | NotStarted | Återstår |
+| 13 | PDR, position och hastighet | NotStarted | Återstår |
+| 14 | Truckkörning och GPS-fusion | NotStarted | Återstår |
+| 15 | WiFi- och BLE-positionering | NotStarted | Återstår |
+| 16 | Lagerkarta och kartmatchning | NotStarted | Återstår |
+| 17 | Inspelning, simulering och jämförelse | NotStarted | Återstår |
+| 18 | Slutvalidering, säkerhet och publicering | NotStarted | Återstår |
 
-Iteration 01: se docs/iteration-01.md. Iteration 02: se docs/iteration-02.md. Iteration 03: se docs/iteration-03.md. Iteration 04: se docs/iteration-04.md. Iteration 05: se docs/iteration-05.md. Iteration 06: se docs/iteration-06.md. Iteration 07–18 har inte påbörjats. Ingen faktisk klientrelease har publicerats. Signerade produktionspaket och verkliga uppgraderingar återstår att verifiera.
+Verified kräver dokumenterade acceptanskriterier på verklig hårdvara. Released kräver separat signerings-, installations- och publiceringsbevis. Simulering räknas inte som fältvalidering.
 
-Kontrollerad process: kör tools/Verify.ps1 och tools/Smoke-Test.ps1; dokumentera testresultat och manuella acceptanskriterier i iterationsrapporten. Uppdatera iterations.json i en granskbar Git-commit. Verified kräver datum och uppfyllda kriterier på Android och Windows; Released kräver separat publiceringsbevis. Ingen publik API-metod ändrar status.
-
-Commitfältet pekar på implementationscommitten när den finns; en commit kan inte bädda in sin egen hash i en versionshanterad fil. Byggmetadata hämtar alltid den exakta byggda committen.
+iterations.json registrerar implementationscommitten i en separat metadatacommit eftersom en commit inte kan bädda in sin egen hash. Byggmetadata visar exakt byggd HEAD och om arbetskopian innehöll ändringar.

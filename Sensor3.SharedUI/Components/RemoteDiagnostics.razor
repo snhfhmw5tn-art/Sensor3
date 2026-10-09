@@ -1,0 +1,48 @@
+@implements IDisposable
+@using Sensor3.Contracts
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IServiceProvider Services
+@if (source is not null && authorized)
+{
+    <section><h2>Native-klienter på denna server</h2>
+        <label>Session <select @bind="selected"><option value="">Välj session</option>@foreach (var session in sessions) { <option value="@session.SessionId">@session.DeviceId · @session.Mode · @session.Statistics.Status</option> }</select></label>
+        @if (snapshot?.Client is { } native)
+        {
+            <p>@native.Id (@native.Platform) · klientversion @native.Build.ApplicationVersion · commit @native.Build.GitCommitHash · iteration @native.Build.LatestImplementedIteration · klientrapporterad verifierad @native.Build.LatestVerifiedIteration</p>
+            @if (sessions.FirstOrDefault(x => x.SessionId.ToString() == selected) is { } current)
+            { <p>Paket @current.Statistics.Packets · JSON-byte @current.Statistics.PayloadBytes · saknade paket @current.Statistics.MissingPackets · @current.Statistics.PacketsPerSecond.ToString("F1") paket/s</p> }
+            @foreach (var sensor in snapshot.Sensors)
+            {
+                <article><h3>@sensor.Descriptor.Name</h3><p>@sensor.Descriptor.Vendor · @sensor.Descriptor.Kind · @sensor.Status · faktisk Hz @(sensor.ActualFrequencyHz?.ToString("F1") ?? "Unknown") · prov @sensor.Count · @sensor.Error</p>
+                    @if (sensor.Latest is { } reading)
+                    { <p>Tid @(reading.MonotonicTimestampNanoseconds?.ToString() ?? reading.TimestampUtc?.ToString("O")) · @reading.TimestampSource · @reading.Quality · @reading.CoordinateFrame</p>
+                        @foreach (var value in reading.Values) { <p>@value.Name: @value.Value.ToString("G6") @value.Unit</p><SensorChannelGraph Samples="sensor.History" Channel="@value.Name" Unit="@value.Unit" SensorName="@sensor.Descriptor.Name" /> }
+                    }
+                </article>
+            }
+        }
+    </section>
+}
+@code {
+    private IRealtimeDiagnosticsSource? source;
+    private IReadOnlyList<TelemetrySessionSummary> sessions = [];
+    private SensorDiagnosticsSnapshot? snapshot;
+    private string selected = "";
+    private bool authorized, disposed;
+    private System.Threading.Timer? timer;
+    protected override async Task OnInitializedAsync()
+    {
+        source = Services.GetService(typeof(IRealtimeDiagnosticsSource)) as IRealtimeDiagnosticsSource;
+        var authentication = Services.GetService(typeof(AuthenticationStateProvider)) as AuthenticationStateProvider;
+        authorized = authentication is not null && (await authentication.GetAuthenticationStateAsync()).User.IsInRole("ReleaseAdministrator");
+        if (source is not null && authorized) timer = new(_ => { _ = Refresh(); }, null, 0, 250);
+    }
+    private async Task Refresh()
+    {
+        if (disposed) return;
+        try { await InvokeAsync(() => { if (!disposed) { sessions = source!.GetSessions(); snapshot = Guid.TryParse(selected, out var id) ? source.GetDiagnostics(id) : null; StateHasChanged(); } }); }
+        catch (ObjectDisposedException) when (disposed) { }
+        catch (TaskCanceledException) when (disposed) { }
+    }
+    public void Dispose() { disposed = true; timer?.Dispose(); }
+}

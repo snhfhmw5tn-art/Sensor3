@@ -4,6 +4,12 @@ namespace Sensor3;
 
 public static class MauiProgram
 {
+    private static string InitializeDeviceId()
+    {
+        var id = Preferences.Default.Get("TelemetryDeviceId", "");
+        if (id.Length == 0) { id = Guid.NewGuid().ToString("N"); Preferences.Default.Set("TelemetryDeviceId", id); }
+        return id;
+    }
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();
@@ -54,6 +60,11 @@ public static class MauiProgram
         builder.Services.AddSingleton(Sensor3.Core.BuildMetadata.Load(typeof(MauiProgram).Assembly));
         builder.Services.AddSingleton(Sensor3.Core.BuildMetadata.LoadIterations(typeof(MauiProgram).Assembly));
 
+        builder.Services.AddSingleton<Sensor3.Contracts.ITelemetryClient>(x => new Sensor3.Sensors.SensorTelemetryClient(
+            Preferences.Default.Get("TelemetryDeviceId", InitializeDeviceId()),
+            x.GetRequiredService<Sensor3.Contracts.ISensorProvider>(), x.GetRequiredService<Sensor3.Sensors.SensorDiagnosticsStore>(),
+            x.GetRequiredService<Sensor3.Contracts.BuildInfo>(), x.GetRequiredService<IReadOnlyList<Sensor3.Contracts.IterationInfo>>(),
+            x.GetRequiredService<ILogger<Sensor3.Sensors.SensorTelemetryClient>>()));
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();
         builder.Logging.AddDebug();

@@ -13,4 +13,5 @@
     <ProjectReference Include="..\Sensor3.Distribution\Sensor3.Distribution.csproj" />
   </ItemGroup>
 
+  <ItemGroup><ProjectReference Include="..\Sensor3.Infrastructure\Sensor3.Infrastructure.csproj" /></ItemGroup>
 </Project>

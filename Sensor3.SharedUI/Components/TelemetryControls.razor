@@ -1,0 +1,45 @@
+@implements IAsyncDisposable
+@using Sensor3.Contracts
+@inject IServiceProvider Services
+@if (client is not null)
+{
+    <section><h2>Överföring till server</h2>
+        <p>Enhets-ID: @client.DeviceId. Registrera en SHA-256-hash av enhetstoken i serverns Telemetry:DeviceTokenHashes. Serverns HTTPS-certifikat måste vara betrott av enheten.</p>
+        <label>HTTPS-server <input @bind="endpoint" placeholder="https://server.example" /></label>
+        <label>Enhetstoken <input type="password" @bind="token" autocomplete="off" /></label>
+        <label>Läge <select @bind="mode"><option value="Research">Research · 100 ms</option><option value="Production">Production · 250 ms</option></select></label>
+        <button @onclick="Connect" disabled="@busy">Anslut</button><button @onclick="Disconnect" disabled="@busy">Koppla från</button>
+        <p role="status">@message</p>
+        <p>@statistics?.Status · paket: @statistics?.Packets · JSON-byte: @statistics?.PayloadBytes · tappade köhändelser: @statistics?.DroppedEvents · RTT: @statistics?.RoundTripMilliseconds?.ToString("F1") ms</p>
+        <p>Serverversion: @(client.ServerBuild?.ApplicationVersion ?? "Unknown") · commit: @(client.ServerBuild?.GitCommitHash ?? "Unknown")</p>
+    </section>
+}
+@code {
+    private ITelemetryClient? client;
+    private string endpoint = "", token = "", message = "Inte ansluten";
+    private TelemetryMode mode;
+    private TelemetryStatistics? statistics;
+    private bool busy, disposed;
+    private System.Threading.Timer? timer;
+    protected override void OnInitialized()
+    {
+        client = Services.GetService(typeof(ITelemetryClient)) as ITelemetryClient;
+        if (client is not null) timer = new(_ => { _ = Refresh(); }, null, 1000, 1000);
+    }
+    private async Task Refresh()
+    {
+        if (disposed) return;
+        try { await InvokeAsync(() => { if (!disposed) { statistics = client?.GetStatistics(); StateHasChanged(); } }); }
+        catch (ObjectDisposedException) when (disposed) { }
+        catch (TaskCanceledException) when (disposed) { }
+    }
+    private async Task Connect()
+    {
+        busy = true;
+        try { using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20)); await client!.ConnectAsync(new Uri(endpoint), token, mode, timeout.Token); token = ""; message = "Ansluten. Starta sensorinsamling för att skicka mätvärden."; }
+        catch (Exception exception) { message = exception.Message; }
+        finally { busy = false; }
+    }
+    private async Task Disconnect() { await client!.DisconnectAsync(); statistics = client.GetStatistics(); message = "Frånkopplad"; }
+    public async ValueTask DisposeAsync() { disposed = true; timer?.Dispose(); if (client is not null) await client.DisconnectAsync(); }
+}

@@ -1,8 +1,10 @@
+using Sensor3.Infrastructure;
 using Sensor3.Dashboard.Components;
 using Sensor3.Distribution;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddDistribution();
+builder.AddSensorTelemetry();
 builder.Services.AddCascadingAuthenticationState();
 
 // Add services to the container.
@@ -30,6 +32,7 @@ app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages:
 
 app.UseDistribution();
 app.MapDistribution();
+app.MapSensorTelemetry();
 
 app.MapStaticAssets();
 

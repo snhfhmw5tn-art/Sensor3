@@ -37,7 +37,7 @@ public sealed class SensorDiagnosticsRenderingTests
     {
         var html = await RenderAsync(new());
         StringAssert.Contains(html, "Klientversion: Unknown");
-        StringAssert.Contains(html, "iteration 07");
+        StringAssert.Contains(html, "Logga in som administratör");
         Assert.IsFalse(html.Contains("server-version", StringComparison.Ordinal));
         Assert.IsFalse(html.Contains("Önskad frekvens", StringComparison.Ordinal));
         Assert.IsFalse(html.Contains("<svg", StringComparison.Ordinal));
