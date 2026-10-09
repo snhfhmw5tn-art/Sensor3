@@ -144,7 +144,7 @@
   },
   {
     "number": 11,
-    "commitDateUtc": null,
+    "commitDateUtc": "2026-10-09T18:10:27+02:00",
     "description": "Dynamisk bärpositionsklassificering",
     "status": "Implemented",
     "testResult": "161 passed, 0 failed, 0 skipped; Android + Windows VS MSBuild: 0 errors, 0 warnings; HTTP metadata/browser smoke passed",
@@ -154,7 +154,7 @@
       "Physical hand/pocket/swing/scanning/mounted validation pending",
       "Hypothesis probabilities are uncalibrated; scanning/mounted require declared prior"
     ],
-    "latestCommit": "Unknown"
+    "latestCommit": "2025e249cb60fe26f40620d10ebbad7d672d7a7c"
   },
   {
     "number": 12,
