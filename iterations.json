@@ -76,11 +76,14 @@
     "number": 6,
     "commitDateUtc": null,
     "description": "GPS, WiFi och Bluetooth",
-    "status": "NotStarted",
-    "testResult": "NotRun",
+    "status": "Implemented",
+    "testResult": "124 passed, 0 failed, 0 skipped (MSTest); Android + Windows VS MSBuild: 0 errors/warnings; HTTP metadata/browser boundary and 32 distribution checks passed; Android 14 TC53 APK install and process launch passed",
     "name": "GPS, WiFi och Bluetooth",
     "verifiedAtUtc": null,
-    "blockers": [],
+    "blockers": [
+      "Native radio/location grant-deny, GPS fix accuracy, WiFi freshness and BLE advertisements need manual validation",
+      "Windows radio/location validation pending; no production release published"
+    ],
     "latestCommit": "Unknown"
   },
   {

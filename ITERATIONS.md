@@ -1,6 +1,6 @@
 # Iterationshistorik
 
-Version 0.5.0. Implementerade: 5/18. Verifierade: 0/18. Publicerade: 0/18.
+Version 0.6.0. Implementerade: 6/18. Verifierade: 0/18. Publicerade: 0/18.
 
 | Nr | Namn | Status |
 |---|---|---|
@@ -9,7 +9,7 @@ Version 0.5.0. Implementerade: 5/18. Verifierade: 0/18. Publicerade: 0/18.
 | 03 | Android APK, Windows MSIX och uppdateringar | Implemented |
 | 04 | Native sensorinsamling | Implemented |
 | 05 | Komplett sensordiagnostik | Implemented |
-| 06 | GPS, WiFi och Bluetooth | NotStarted |
+| 06 | GPS, WiFi och Bluetooth | Implemented |
 | 07 | Realtidskommunikation | NotStarted |
 | 08 | Stegräknaren från Sensor App 2 | NotStarted |
 | 09 | Koordinattransformation och sensorfusion | NotStarted |
@@ -23,7 +23,7 @@ Version 0.5.0. Implementerade: 5/18. Verifierade: 0/18. Publicerade: 0/18.
 | 17 | Inspelning, simulering och jämförelse | NotStarted |
 | 18 | Slutvalidering, säkerhet och publicering | NotStarted |
 
-Iteration 01: se docs/iteration-01.md. Iteration 02: se docs/iteration-02.md. Iteration 03: se docs/iteration-03.md. Iteration 04: se docs/iteration-04.md. Iteration 05: se docs/iteration-05.md. Iteration 06–18 har inte påbörjats. Ingen faktisk klientrelease har publicerats. Signerade produktionspaket och verkliga uppgraderingar återstår att verifiera.
+Iteration 01: se docs/iteration-01.md. Iteration 02: se docs/iteration-02.md. Iteration 03: se docs/iteration-03.md. Iteration 04: se docs/iteration-04.md. Iteration 05: se docs/iteration-05.md. Iteration 06: se docs/iteration-06.md. Iteration 07–18 har inte påbörjats. Ingen faktisk klientrelease har publicerats. Signerade produktionspaket och verkliga uppgraderingar återstår att verifiera.
 
 Kontrollerad process: kör tools/Verify.ps1 och tools/Smoke-Test.ps1; dokumentera testresultat och manuella acceptanskriterier i iterationsrapporten. Uppdatera iterations.json i en granskbar Git-commit. Verified kräver datum och uppfyllda kriterier på Android och Windows; Released kräver separat publiceringsbevis. Ingen publik API-metod ändrar status.
 

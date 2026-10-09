@@ -1,0 +1,68 @@
+@implements IAsyncDisposable
+@using Sensor3.Contracts
+@inject IServiceProvider Services
+<section class="radio-diagnostics">
+<h2>Plats, WiFi och BLE – rådata</h2>
+@if (locationProvider is null) { <p>Native-klient krävs. Webbläsaren samlar inte plats eller radiosignaler.</p> }
+else
+{
+    <p>Manuella förgrundsprov. Plats- och närhetsbehörigheter begärs av operativsystemet. Ingen position beräknas från WiFi eller BLE i denna iteration.</p>
+    <button disabled="@busy" @onclick="Location">Hämta platsfix</button>
+    <button disabled="@busy" @onclick="Wifi">Skanna WiFi</button>
+    <button disabled="@busy" @onclick="Bluetooth">Skanna BLE (5 s)</button>
+    <button disabled="@(!busy)" @onclick="Cancel">Avbryt</button>
+    <p role="status">@message</p>
+    @if (location?.Value is { } fix)
+    {
+        <dl><dt>Latitud / longitud</dt><dd>@fix.Latitude / @fix.Longitude</dd><dt>Noggrannhet / höjd (m)</dt><dd>@Unknown(fix.AccuracyMeters) / @Unknown(fix.AltitudeMeters)</dd>
+        <dt>Hastighet (m/s) / riktning (grader)</dt><dd>@Unknown(fix.SpeedMetersPerSecond) / @Unknown(fix.HeadingDegrees)</dd><dt>Native UTC / mock-källa</dt><dd>@fix.TimestampUtc.ToString("O") / @fix.IsMock</dd></dl>
+    }
+    @if (wifi is not null)
+    {
+        <p>WiFi: @wifi.Status · @wifi.Detail</p>
+        <table><thead><tr><th>SSID</th><th>BSSID</th><th>RSSI dBm</th><th>MHz</th><th>Mottaget UTC / native µs / cache</th></tr></thead><tbody>
+        @foreach (var ap in wifi.Value ?? []) { <tr><td>@ap.Ssid</td><td>@ap.Bssid</td><td>@ap.RssiDbm</td><td>@ap.FrequencyMhz</td><td>@ap.ReceivedAtUtc.ToString("O") / @(ap.NativeTimestampMicroseconds?.ToString() ?? "Unknown") / @ap.IsCached</td></tr> }
+        </tbody></table>
+    }
+    @if (bluetooth is not null)
+    {
+        <p>BLE: @bluetooth.Status · @bluetooth.Detail</p>
+        <table><thead><tr><th>Identifierare</th><th>RSSI dBm</th><th>Annonsdata hex</th><th>Mottaget UTC</th></tr></thead><tbody>
+        @foreach (var item in bluetooth.Value ?? []) { <tr><td>@item.Identifier</td><td>@item.RssiDbm</td><td>@item.AdvertisementHex</td><td>@item.ReceivedAtUtc.ToString("O")</td></tr> }
+        </tbody></table>
+    }
+}
+</section>
+@code {
+    private ILocationProvider? locationProvider;
+    private IWifiScanner? wifiScanner;
+    private IBluetoothScanner? bluetoothScanner;
+    private ObservationResult<LocationObservation>? location;
+    private ObservationResult<IReadOnlyList<WifiObservation>>? wifi;
+    private ObservationResult<IReadOnlyList<BluetoothObservation>>? bluetooth;
+    private CancellationTokenSource? pending;
+    private bool busy;
+    private bool disposed;
+    private string message = "Inga radio-/platsprov tagna";
+    protected override void OnInitialized()
+    {
+        locationProvider = Services.GetService(typeof(ILocationProvider)) as ILocationProvider;
+        wifiScanner = Services.GetService(typeof(IWifiScanner)) as IWifiScanner;
+        bluetoothScanner = Services.GetService(typeof(IBluetoothScanner)) as IBluetoothScanner;
+    }
+    private static string Unknown(double? value) => value?.ToString("G6") ?? "Unknown";
+    private Task Location() => Run(async token => { location = await locationProvider!.GetAsync(token); message = $"Plats: {location.Status} · {location.Detail}"; });
+    private Task Wifi() => Run(async token => { wifi = await wifiScanner!.ScanAsync(token); message = $"WiFi: {wifi.Status}"; });
+    private Task Bluetooth() => Run(async token => { bluetooth = await bluetoothScanner!.ScanAsync(TimeSpan.FromSeconds(5), token); message = $"BLE: {bluetooth.Status}"; });
+    private void Cancel() => pending?.Cancel();
+    private async Task Run(Func<CancellationToken, Task> action)
+    {
+        if (busy || disposed) return;
+        busy = true; using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(30)); pending = cancellation;
+        try { await action(cancellation.Token); }
+        catch (OperationCanceledException) { message = "Prov avbrutet eller tidsgräns uppnådd"; }
+        catch (Exception exception) { message = "Prov misslyckades: " + exception.Message; }
+        finally { pending = null; busy = false; }
+    }
+    public ValueTask DisposeAsync() { disposed = true; pending?.Cancel(); return ValueTask.CompletedTask; }
+}

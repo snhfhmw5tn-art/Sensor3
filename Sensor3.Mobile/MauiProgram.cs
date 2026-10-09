@@ -21,11 +21,20 @@ public static class MauiProgram
             ?? throw new InvalidOperationException("Uppdateringsinställningar saknas.");
         builder.Services.AddSingleton(updateOptions);
         builder.Services.AddSingleton<Sensor3.Contracts.UpdateSessionGuard>();
+        builder.Services.AddSingleton<NativeObservationLifetime>();
+        builder.Services.AddSingleton<Sensor3.Contracts.ILocationProvider, NativeLocationProvider>();
+        builder.Services.AddSingleton<Sensor3.Contracts.IStepSensorProvider, Sensor3.Sensors.NativeStepSensorProvider>();
 #if ANDROID
+        builder.Services.AddSingleton<AndroidRadioScanner>();
+        builder.Services.AddSingleton<Sensor3.Contracts.IWifiScanner>(x => x.GetRequiredService<AndroidRadioScanner>());
+        builder.Services.AddSingleton<Sensor3.Contracts.IBluetoothScanner>(x => x.GetRequiredService<AndroidRadioScanner>());
         builder.Services.AddSingleton<Sensor3.Sensors.ISensorBackend, AndroidSensorBackend>();
         builder.Services.AddSingleton<AndroidSensorPermissions>();
         builder.Services.AddSingleton<Sensor3.Contracts.ISensorPermissionService>(x => x.GetRequiredService<AndroidSensorPermissions>());
 #else
+        builder.Services.AddSingleton<WindowsRadioScanner>();
+        builder.Services.AddSingleton<Sensor3.Contracts.IWifiScanner>(x => x.GetRequiredService<WindowsRadioScanner>());
+        builder.Services.AddSingleton<Sensor3.Contracts.IBluetoothScanner>(x => x.GetRequiredService<WindowsRadioScanner>());
         builder.Services.AddSingleton<Sensor3.Sensors.ISensorBackend, WindowsSensorBackend>();
 #endif
         builder.Services.AddSingleton<Sensor3.Contracts.ISensorProvider, Sensor3.Sensors.SensorProvider>();

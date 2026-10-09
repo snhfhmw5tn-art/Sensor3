@@ -5,11 +5,13 @@ public partial class App : Application
     private readonly Sensor3.Contracts.IApplicationUpdateService updates;
     private readonly Microsoft.Extensions.Logging.ILogger<App> logger;
     private readonly Sensor3.Contracts.ISensorProvider sensors;
-    public App(Sensor3.Contracts.IApplicationUpdateService updates, Microsoft.Extensions.Logging.ILogger<App> logger, Sensor3.Contracts.ISensorProvider sensors)
+    private readonly NativeObservationLifetime observations;
+    public App(Sensor3.Contracts.IApplicationUpdateService updates, Microsoft.Extensions.Logging.ILogger<App> logger, Sensor3.Contracts.ISensorProvider sensors, NativeObservationLifetime observations)
     {
         this.updates = updates;
         this.logger = logger;
         this.sensors = sensors;
+        this.observations = observations;
         InitializeComponent();
     }
 
@@ -28,6 +30,7 @@ public partial class App : Application
     }
     private async Task StopSensorsAsync()
     {
+        observations.CancelActive();
         try { await sensors.StopAsync(); }
         catch (Exception exception) { Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger, exception, "Sensorinsamling kunde inte stoppas vid appavbrott"); }
     }

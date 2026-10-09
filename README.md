@@ -6,7 +6,7 @@ Installera även MAUI-komponentgrupperna Android, Windows, Blazor och Shared som
 
 Byggkonfigurationen hittar även lokalt installerad Android SDK i `%LOCALAPPDATA%\Android\Sdk` och Java i `%LOCALAPPDATA%\Microsoft\Jdk` när inga explicita SDK-sökvägar har angetts. Befintliga explicita sökvägar har företräde.
 
-Native Android/Windows-klient, ASP.NET Core API och Blazor-dashboard, .NET 10 / C# 14. Version 0.5.0. Arbetet följer [masterplanen](docs/MASTERPLAN.md), en iteration i taget.
+Native Android/Windows-klient, ASP.NET Core API och Blazor-dashboard, .NET 10 / C# 14. Version 0.6.0. Arbetet följer [masterplanen](docs/MASTERPLAN.md), en iteration i taget.
 
 ## Bygg och kör
 
@@ -59,3 +59,4 @@ Rådata visas lokalt och skickas inte till servern. Webbläsaren erbjuder ingen 
 Öppna `/diagnostics` (även `/sensors`) i native-appen. Alla inventerade sensorer visas med tillverkare eller Unknown, tillgänglighet, behörighet, aktivitet, kvalitet, fel, frekvens och tidsstämpel. Grafer och kanaltabeller visar råa normaliserade värden och diagnostisk exponentiell utjämning där det är tillämpligt. Ingen positioneringsalgoritm är aktiv ännu.
 
 Blazor-dashboarden har samma mottagarvy, utan egen sensorinsamling. Klientmetadata visas som Unknown tills en native-klient har levererat data via mottagarkontraktet; faktisk nätverksanslutning tillkommer i iteration 07. Se [iteration 05](docs/iteration-05.md) för statusmodell, filtermetod, tester och hårdvarubegränsningar. Status är Implemented, inte Verified eller Released.
+Iteration 06 tillför native platsfix, WiFi- och BLE-skanning i Sensordiagnostik. Se [rapport](docs/iteration-06.md) för behörigheter, OS-begränsningar och resultat. TC53-installation/start passerar; radio- och platsmätningar behöver fysisk kontroll.
