@@ -44,4 +44,10 @@ Status kvarstår **Implemented**, inte Verified. Iteration 02 har inte påbörja
 
 ## Manuell start i Visual Studio
 
+### Komplettering: SDK-sökvägar från IDE
+
+Visual Studios felpanel visade fortfarande XA5300 trots korrekt checkout. Sensor3.Mobile tillåter nu lokal omvärdering av AndroidSdkDirectory/JavaSdkDirectory, och ett mål före `_ResolveSdks` använder installerade SDK/JDK i användarens lokala appdatamapp om tillförd sökväg saknar adb/java. Giltiga alternativa installationer behålls. Kontroll med Visual Studios MSBuild, DesignTimeBuild=true och avsiktligt ogiltiga globala SDK/JDK-sökvägar valde rätt lokala installationer och passerade. Hela solutionbygget för Android och Windows avslutades med kod 0.
+
+IDE-inställningssökningen gav inga Android-inställningar. UI-verktygets klick misslyckades med `coordinate input geometry is unavailable`; IDE:s felpanel hade kvar XA5300 vid sista avläsningen. Omstart/omladdning i IDE återstår att kontrollera. Ingen direkt ändring av IDE:s inställningsdialog har verifierats.
+
 Välj Sensor3.Mobile som startprojekt och Windows Machine för native-klienten, eller Sensor3.Dashboard för webbgränssnittet. Beräkningsbiblioteken är inte körbara startprojekt. Kontrollera Start → Om / iterationshistorik → Start. För Android behövs en ansluten enhet eller konfigurerad emulator.
