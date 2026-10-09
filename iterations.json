@@ -1,7 +1,7 @@
 [
   {
     "number": 1,
-    "commitDateUtc": null,
+    "commitDateUtc": "2026-10-09T06:47:59.0000000+00:00",
     "description": "Grundplattform, Git och versionsinformation",
     "status": "Implemented",
     "testResult": "7 passed, 0 failed, 0 skipped (MSTest); Windows solution build: 0 errors, 0 warnings; HTTP smoke passed",
@@ -11,7 +11,7 @@
       "Android workload/device unavailable; Android build and launch not verified",
       "Native About UI manual verification pending"
     ],
-    "latestCommit": "Unknown"
+    "latestCommit": "53e3d6032114af7d9ec82ea584eb19682672f714"
   },
   {
     "number": 2,

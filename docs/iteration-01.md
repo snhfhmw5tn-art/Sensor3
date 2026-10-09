@@ -31,3 +31,5 @@ Administrationsvy/auth och distribution införs i iteration 02. PostgreSQL/PostG
 Implementationscommit: se iterations.json efter första committen. Commitdatum kommer från Git, inte från rapportens datum. Aktuell build innehåller alltid exakt hash/datum för committen som byggs.
 
 Nästa iteration kan genomföras på användarens instruktion. Iteration 02 påbörjas inte automatiskt. Iteration 01 får inte markeras Verified innan återstående native-acceptanskriterier har verifierats.
+ 
+Implementationscommit: 53e3d6032114af7d9ec82ea584eb19682672f714. Commitdatum UTC: 2026-10-09T06:47:59.0000000+00:00.
