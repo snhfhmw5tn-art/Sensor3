@@ -1,12 +1,12 @@
 # Iterationshistorik
 
-Version 0.2.0. Implementerade: 2/18. Verifierade: 0/18. Publicerade: 0/18.
+Version 0.3.0. Implementerade: 3/18. Verifierade: 0/18. Publicerade: 0/18.
 
 | Nr | Namn | Status |
 |---|---|---|
 | 01 | Grundplattform, Git och versionsinformation | Implemented |
 | 02 | Webbportal för installation och versionshantering | Implemented |
-| 03 | Android APK, Windows MSIX och uppdateringar | NotStarted |
+| 03 | Android APK, Windows MSIX och uppdateringar | Implemented |
 | 04 | Native sensorinsamling | NotStarted |
 | 05 | Komplett sensordiagnostik | NotStarted |
 | 06 | GPS, WiFi och Bluetooth | NotStarted |
@@ -23,7 +23,7 @@ Version 0.2.0. Implementerade: 2/18. Verifierade: 0/18. Publicerade: 0/18.
 | 17 | Inspelning, simulering och jämförelse | NotStarted |
 | 18 | Slutvalidering, säkerhet och publicering | NotStarted |
 
-Iteration 01: se docs/iteration-01.md. Iteration 02: se docs/iteration-02.md. Iteration 03–18 har inte påbörjats. Ingen faktisk klientrelease har publicerats.
+Iteration 01: se docs/iteration-01.md. Iteration 02: se docs/iteration-02.md. Iteration 03: se docs/iteration-03.md. Iteration 04–18 har inte påbörjats. Ingen faktisk klientrelease har publicerats. Signerade produktionspaket och verkliga uppgraderingar återstår att verifiera.
 
 Kontrollerad process: kör tools/Verify.ps1 och tools/Smoke-Test.ps1; dokumentera testresultat och manuella acceptanskriterier i iterationsrapporten. Uppdatera iterations.json i en granskbar Git-commit. Verified kräver datum och uppfyllda kriterier på Android och Windows; Released kräver separat publiceringsbevis. Ingen publik API-metod ändrar status.
 

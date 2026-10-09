@@ -17,6 +17,7 @@ public sealed class ApplicationUpdateTests
     }
     private sealed class Handler(RSA key, ApplicationRelease release, byte[] package, string scenario) : HttpMessageHandler
     {
+        private int checks;
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             if (request.RequestUri!.AbsolutePath.EndsWith("download"))
@@ -26,11 +27,12 @@ public sealed class ApplicationUpdateTests
             }
             var nonce = request.RequestUri.Query.Split('&').Single(x => x.StartsWith("nonce=", StringComparison.Ordinal))[6..];
             var selected = scenario == "channel" ? release with { Manifest = release.Manifest with { Channel = ReleaseChannel.Beta } } : release;
+            var revoked = scenario == "revoked" && ++checks > 1;
             if (scenario == "downgrade") selected = release with { Manifest = release.Manifest with { Version = "0.1.0" } };
             if (scenario == "platform") selected = release with { Manifest = release.Manifest with { Platform = ClientPlatform.Windows } };
             var payload = JsonSerializer.SerializeToUtf8Bytes(new AuthenticatedUpdate(scenario == "replay" ? "wrong" : nonce,
                 scenario == "expired" ? DateTimeOffset.UtcNow.AddMinutes(-1) : DateTimeOffset.UtcNow.AddMinutes(5),
-                new UpdateCheckResult("UpdateAvailable", true, false, false, selected)), ApplicationUpdateService.JsonOptions);
+                revoked ? new UpdateCheckResult("NoCompatibleRelease", false, false, true, null) : new UpdateCheckResult("UpdateAvailable", true, false, false, selected)), ApplicationUpdateService.JsonOptions);
             var signature = key.SignData(payload, HashAlgorithmName.SHA256, RSASignaturePadding.Pss);
             if (scenario == "signature") signature[0] ^= 1;
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(new SignedUpdateEnvelope(Convert.ToBase64String(payload), Convert.ToBase64String(signature)), options: ApplicationUpdateService.JsonOptions) });
@@ -126,5 +128,24 @@ public sealed class ApplicationUpdateTests
     {
         using var f = new Fixture();
         await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => f.Service.InstallAsync());
+    }
+    [TestMethod]
+    public async Task TestThat_revocation_during_download_blocks_installer()
+    {
+        using var f = new Fixture("revoked");
+        await f.Service.CheckAsync();
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => f.Service.InstallAsync());
+        Assert.AreEqual(0, f.Installer.Calls);
+        Assert.HasCount(0, Directory.GetFiles(f.Root));
+    }
+    [TestMethod]
+    public async Task TestThat_cancelled_download_does_not_install()
+    {
+        using var f = new Fixture();
+        await f.Service.CheckAsync();
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        await Assert.ThrowsExactlyAsync<TaskCanceledException>(() => f.Service.InstallAsync(cancellation.Token));
+        Assert.AreEqual(0, f.Installer.Calls);
     }
 }

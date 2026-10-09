@@ -6,7 +6,7 @@ Installera även MAUI-komponentgrupperna Android, Windows, Blazor och Shared som
 
 Byggkonfigurationen hittar även lokalt installerad Android SDK i `%LOCALAPPDATA%\Android\Sdk` och Java i `%LOCALAPPDATA%\Microsoft\Jdk` när inga explicita SDK-sökvägar har angetts. Befintliga explicita sökvägar har företräde.
 
-Native Android/Windows-klient, ASP.NET Core API och Blazor-dashboard, .NET 10 / C# 14. Version 0.2.0. Arbetet följer [masterplanen](docs/MASTERPLAN.md), en iteration i taget.
+Native Android/Windows-klient, ASP.NET Core API och Blazor-dashboard, .NET 10 / C# 14. Version 0.3.0. Arbetet följer [masterplanen](docs/MASTERPLAN.md), en iteration i taget.
 
 ## Bygg och kör
 
@@ -32,6 +32,12 @@ Se [iterationshistorik](ITERATIONS.md), [arkitektur](ARCHITECTURE.md) och [verif
 Öppna dashboardens `/download` i Android- eller Windows-webbläsaren. Plattform föreslås från user agent när möjligt; manuellt val och Development/Beta/Stable finns alltid. Inga exempelpaket läggs i releasekatalogen. Klientpaketens metadata visas separat från portal/serverversion.
 
 Administration: kör `./tools/Configure-DistributionAdmin.ps1` i PowerShell för att välja lösenord och spara PBKDF2-hash i båda hostprojektens lokala user-secrets. Kör sedan API/dashboard i Development och öppna `/admin/releases`. Utan konfigurerat konto är administration avstängd. Lösenordet skrivs aldrig i Git eller loggar. User-secrets är lokal utvecklingskonfiguration, inte krypterad produktionslagring. I produktion används HTTPS och en hemlighetshanterare för `Distribution:AdminUsername` och `Distribution:AdminPasswordHash` (miljövariabler med dubbla understreck stöds). Se [iterationsrapporten](docs/iteration-02.md) för manifest och driftkrav.
+
+## Installation och uppdateringar – iteration 03
+
+Native-klientens `/updates` visar installerad och tillgänglig version samt release notes. Den kontrollerar vid start och verifierar signerade manifest, nonce, kanal, plattform, versionsordning, SHA-256 och filstorlek före OS-installation. Aktiva mätningar skyddas med ett gemensamt sessionslås. Windows-portalen erbjuder `.appinstaller` med kontroll vid start och användarprompt. Publicering kräver verifierad paketsignatur och inbyggd appidentitet/version.
+
+Konfigurera riktig HTTPS-server, betrodd publik manifestnyckel och externa signeringsnycklar före skarp paketering. Defaultinställningen stoppar uppdateringar tills detta finns. Se [iteration 03 med kommandon och testresultat](docs/iteration-03.md). Android/Windows-byggen och automatiska kontroller är gjorda; verkliga signerade v1→v2-installationer och bevarad appdata återstår. Iteration 03 är Implemented, inte Verified eller Released.
 
 API och dashboard ska ha samma `Distribution:StorageRoot`, med skrivrättighet bara för serverkontot och utanför webroot. Standard är `%LOCALAPPDATA%\Sensor3\distribution`. Default max paketstorlek är 100 MiB (`Distribution:MaximumArtifactBytes`, upp till 1 GiB). GET `/api/releases`, `/api/releases/latest?platform=Android&channel=Stable` och `/api/updates/check?platform=Android&channel=Stable&version=0.1.0&buildNumber=1` finns på båda hostarna. GET `/api/releases/{id}/download` kontrollerar återkallelse och integritet. Okänd kanal/plattform ger 400; saknad kompatibel release ger 404 på latest och NoCompatibleRelease på updates/check.
 

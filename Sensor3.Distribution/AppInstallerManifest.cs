@@ -19,7 +19,7 @@ public static class AppInstallerManifest
         if ((string?)identity.Attribute("Name") != "se.qsys.sensor3" || (string?)identity.Attribute("Publisher") != "CN=Sensor3" || (string?)identity.Attribute("Version") != $"{release.Manifest.Version}.{release.Manifest.BuildNumber}")
             throw new InvalidDataException("Paketidentiteten stämmer inte.");
         XNamespace ns = "http://schemas.microsoft.com/appx/appinstaller/2018";
-        var installerUrl = new Uri(root, $"/api/releases/appinstaller?channel={release.Manifest.Channel}");
+        var installerUrl = new Uri(root, $"/api/releases/Sensor3.appinstaller?channel={release.Manifest.Channel}");
         var main = new XElement(ns + "MainPackage", new XAttribute("Uri", new Uri(root, $"/api/releases/{release.Id}/download")));
         foreach (var name in new[] { "Name", "Publisher", "Version", "ProcessorArchitecture" })
             main.Add(new XAttribute(name, (string?)identity.Attribute(name) ?? throw new InvalidDataException("Paketattribut saknas.")));

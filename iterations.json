@@ -21,18 +21,25 @@
     "testResult": "37 passed, 0 failed, 0 skipped (MSTest); 26 HTTP distribution/security checks passed; Android + Windows VS MSBuild succeeded without errors/warnings; desktop browser and mobile-width portal checked",
     "name": "Webbportal för installation och versionshantering",
     "verifiedAtUtc": null,
-    "blockers": ["Physical Android browser not verified", "Signed package installation/publication validation remains in iteration 03; no actual release published"],
+    "blockers": [
+      "Physical Android browser not verified",
+      "Signed package installation/publication validation remains in iteration 03; no actual release published"
+    ],
     "latestCommit": "bdefc4b1a3d772472198afe8143f0119e4c28281"
   },
   {
     "number": 3,
     "commitDateUtc": null,
     "description": "Android APK, Windows MSIX och uppdateringar",
-    "status": "NotStarted",
-    "testResult": "NotRun",
+    "status": "Implemented",
+    "testResult": "57 passed, 0 failed, 0 skipped (MSTest); 32 HTTP security/distribution checks passed; Android + Windows VS MSBuild: 0 errors/warnings; unsigned self-contained Windows Release MSIX and AppInstaller generation passed; native signed upgrade tests NotRun",
     "name": "Android APK, Windows MSIX och uppdateringar",
     "verifiedAtUtc": null,
-    "blockers": [],
+    "blockers": [
+      "No Android device/emulator connected; native v1-to-v2 upgrade/data preservation not run",
+      "Production HTTPS and signing identities not supplied; signed MSIX and certificate trust not verified",
+      "Automatic approval rejected private signing-key test creation; key script not executed"
+    ],
     "latestCommit": "Unknown"
   },
   {

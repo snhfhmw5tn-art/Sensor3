@@ -23,7 +23,7 @@ public sealed class AppInstallerTests
     {
         using var package = Package();
         var document = XDocument.Parse(AppInstallerManifest.Create(Release(), package, "https://updates.example"));
-        Assert.AreEqual("https://updates.example/api/releases/appinstaller?channel=Stable", (string?)document.Root!.Attribute("Uri"));
+        Assert.AreEqual("https://updates.example/api/releases/Sensor3.appinstaller?channel=Stable", (string?)document.Root!.Attribute("Uri"));
         var launch = document.Descendants().Single(x => x.Name.LocalName == "OnLaunch");
         Assert.AreEqual("0", (string?)launch.Attribute("HoursBetweenUpdateChecks"));
         Assert.AreEqual("true", (string?)launch.Attribute("ShowPrompt"));

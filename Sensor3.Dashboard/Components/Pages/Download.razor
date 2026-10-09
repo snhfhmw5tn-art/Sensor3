@@ -43,7 +43,7 @@ else
                 <a class="download-button" href="@($"/api/releases/{release.Id}/download")" data-enhance-nav="false">Ladda ned @release.Artifact.FileName</a>
                 @if (platform == ClientPlatform.Windows)
                 {
-                    <a class="download-button" href="@($"/api/releases/appinstaller?channel={SelectedChannel}")" data-enhance-nav="false">Installera med automatiska uppdateringskontroller</a>
+                    <a class="download-button" href="@($"/api/releases/Sensor3.appinstaller?channel={SelectedChannel}")" data-enhance-nav="false">Installera med automatiska uppdateringskontroller</a>
                 }
             }
             <h3>Installationsinstruktioner</h3>

@@ -75,7 +75,7 @@ public static class DistributionHosting
     }
     public static void MapDistribution(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/api/releases/appinstaller", async (HttpContext context, ReleaseStore store, BuildInfo build, DistributionOptions options) => await SafeAsync(context, async () =>
+        endpoints.MapGet("/api/releases/Sensor3.appinstaller", async (HttpContext context, ReleaseStore store, BuildInfo build, DistributionOptions options) => await SafeAsync(context, async () =>
         {
             var channel = ParseEnum<ReleaseChannel>(context.Request.Query["channel"].ToString());
             var release = ReleaseSelection.Latest(await store.ListAsync(context.RequestAborted), ClientPlatform.Windows, channel, build.ApplicationVersion);
@@ -85,6 +85,7 @@ public static class DistributionHosting
             await using var package = download.Value.Content;
             context.Response.Headers.CacheControl = "no-store";
             context.Response.Headers.XContentTypeOptions = "nosniff";
+            context.Response.Headers.ContentDisposition = "attachment; filename=Sensor3.appinstaller";
             return Results.Content(AppInstallerManifest.Create(release, package, options.PublicBaseUrl), "application/appinstaller", Encoding.UTF8);
         }));
         endpoints.MapGet("/api/updates/authenticated", async (HttpContext context, ReleaseStore store, BuildInfo build, DistributionOptions options) => await SafeAsync(context, async () =>

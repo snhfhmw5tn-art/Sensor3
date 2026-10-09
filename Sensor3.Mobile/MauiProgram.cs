@@ -24,7 +24,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<Sensor3.Contracts.IUpdateSessionGuard>(x => x.GetRequiredService<Sensor3.Contracts.UpdateSessionGuard>());
         builder.Services.AddSingleton<Sensor3.Contracts.IUpdateInstaller, NativeUpdateInstaller>();
         builder.Services.AddSingleton<Sensor3.Contracts.IApplicationUpdateService>(x => new Sensor3.Core.ApplicationUpdateService(
-            new HttpClient { Timeout = TimeSpan.FromMinutes(5) }, updateOptions,
+            new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromMinutes(5) }, updateOptions,
             new Sensor3.Contracts.InstalledApplication(AppInfo.Current.VersionString, long.Parse(AppInfo.Current.BuildString),
 #if ANDROID
                 Sensor3.Contracts.ClientPlatform.Android),

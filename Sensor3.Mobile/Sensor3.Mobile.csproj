@@ -41,8 +41,14 @@
     <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(WindowsPackageType)' == 'MSIX' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <SelfContained>true</SelfContained>
+  </PropertyGroup>
+
   <ItemGroup>
-    <EmbeddedResource Include="Resources\Raw\update-settings.json" LogicalName="Sensor3.UpdateSettings.json" />
+    <EmbeddedResource Include="Resources\Raw\update-settings.json" LogicalName="Sensor3.UpdateSettings.json" Condition="'$(Sensor3UpdateSettingsPath)' == ''" />
+    <EmbeddedResource Include="$(Sensor3UpdateSettingsPath)" LogicalName="Sensor3.UpdateSettings.json" Condition="'$(Sensor3UpdateSettingsPath)' != ''" />
     <!-- App Icon -->
     <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
 
@@ -57,7 +63,7 @@
     <MauiFont Include="Resources\Fonts\*" />
 
     <!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
-    <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+    <MauiAsset Include="Resources\Raw\**" Exclude="Resources\Raw\update-settings.json" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

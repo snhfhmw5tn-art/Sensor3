@@ -57,7 +57,7 @@ public sealed class ReleaseStore
             !Regex.IsMatch(fileName, @"^[a-zA-Z0-9][a-zA-Z0-9._-]*$", RegexOptions.CultureInvariant) || !fileName.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
             throw new ArgumentException("Filnamn måste vara ett enkelt .apk- eller .msix-namn för vald plattform.");
         var id = Guid.NewGuid();
-        var temporary = Path.Combine(root, $"{id:N}.upload");
+        var temporary = Path.Combine(root, $"{id:N}.upload{extension}");
         var artifactPath = Path.Combine(root, $"{id:N}.package");
         var committed = false;
         try

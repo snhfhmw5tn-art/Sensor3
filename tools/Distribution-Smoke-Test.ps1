@@ -73,6 +73,15 @@ try {
         compatibility=@{minimumServerVersion='0.2.0'}; updatePolicy=@{mandatory=$true}
     } | ConvertTo-Json -Depth 4
     $form = @{manifest=$manifest;artifact=Get-Item $package;__RequestVerificationToken=$csrf}
+    $wrongVersion = $manifest | ConvertFrom-Json
+    $wrongVersion.buildNumber = 4
+    Check ((Request '/admin/releases/publish' 'POST' $session $null @{manifest=($wrongVersion | ConvertTo-Json -Depth 4);artifact=Get-Item $package;__RequestVerificationToken=$csrf}).StatusCode -eq 400) 'Embedded version mismatch denied'
+    $unsigned = Join-Path $testRoot 'unsigned.apk'
+    $archive = [IO.Compression.ZipFile]::Open($unsigned,[IO.Compression.ZipArchiveMode]::Create)
+    try { $writer=[IO.StreamWriter]::new($archive.CreateEntry('AndroidManifest.xml').Open()); $writer.Write('Unsigned negative fixture'); $writer.Dispose() } finally { $archive.Dispose() }
+    $unsignedManifest = $manifest | ConvertFrom-Json
+    $unsignedManifest.expectedSha256 = (Get-FileHash $unsigned -Algorithm SHA256).Hash.ToLowerInvariant()
+    Check ((Request '/admin/releases/publish' 'POST' $session $null @{manifest=($unsignedManifest | ConvertTo-Json -Depth 4);artifact=Get-Item $unsigned;__RequestVerificationToken=$csrf}).StatusCode -eq 400) 'Unsigned APK denied'
     Check ((Request '/admin/releases/publish' 'POST' $session $null $form).StatusCode -eq 302) 'Publish signature-verified debug APK to temporary catalogue'
     $latest = Invoke-RestMethod 'http://127.0.0.1:5303/api/releases/latest?platform=Android&channel=Development'
     Check ($latest.manifest.version -eq '0.3.0') 'Shared API catalogue'
@@ -83,7 +92,7 @@ try {
     $authenticated = [Text.Encoding]::UTF8.GetString($payload) | ConvertFrom-Json
     Check ($authenticated.nonce -eq $nonce -and $authenticated.result.release.id -eq $latest.id) 'Authenticated selection bound to nonce'
     Check ((Request '/api/updates/authenticated?nonce=bad').StatusCode -eq 400) 'Invalid nonce denied'
-    Check ((Request '/api/releases/appinstaller?channel=Stable').StatusCode -eq 404) 'No invented App Installer package'
+    Check ((Request '/api/releases/Sensor3.appinstaller?channel=Stable').StatusCode -eq 404) 'No invented App Installer package'
     Check ((Request '/download?platform=Android&channel=Development').Content -match $latest.artifact.sha256) 'Portal shows real checksum'
     $download = Request "/api/releases/$($latest.id)/download"
     Check ($download.StatusCode -eq 200 -and $download.Headers['X-Content-Type-Options'] -contains 'nosniff') 'Download attachment'
