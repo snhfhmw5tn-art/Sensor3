@@ -44,7 +44,7 @@
   },
   {
     "number": 4,
-    "commitDateUtc": null,
+    "commitDateUtc": "2026-10-09T13:59:15.0000000+00:00",
     "description": "Native sensorinsamling",
     "status": "Implemented",
     "testResult": "91 passed, 0 failed, 0 skipped (MSTest); Android + Windows VS MSBuild: 0 errors/warnings; 32 HTTP distribution checks and browser sensor boundary passed; native Windows discovery: 0 available, 15 unsupported, 0 errors; real sensor measurements NotRun",
@@ -55,7 +55,7 @@
       "This Windows computer exposes no available sensors; actual frequency, values and hardware interruption tests NotRun",
       "Manual native UI and foreground lifecycle checks pending on both platforms"
     ],
-    "latestCommit": "Unknown"
+    "latestCommit": "eece9943c854a3d11e3e79d630a514d81de40a90"
   },
   {
     "number": 5,
