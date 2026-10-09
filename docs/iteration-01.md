@@ -22,7 +22,7 @@ Ny solution och alla projektkällor/resurser; Directory.Build.props/targets, Dir
 
 ## Återstående manuella tester och begränsningar
 
-Android-workload saknas i miljön: Android-bygge/start och fysisk enhet/emulator är inte verifierade. Windows-klienten kompilerar; navigation, About och layout kräver manuell native-kontroll. Dashboardens HTML är kontrollerad via HTTP, ingen visuell granskning är genomförd. Inga signerade APK/MSIX-releasepaket eller verkliga sensorresultat finns i denna iteration. GitHub Actions är konfigurerad, men dess körresultat måste kontrolleras separat.
+Android-workload, Android SDK och Microsoft OpenJDK 17 är nu installerade. Android- och Windows-bygget är godkänt med 0 fel och 0 varningar. Ingen Android-enhet/emulator är ansluten; starttest på Android återstår. Windows-klienten kompilerar; navigation, About och layout kräver manuell native-kontroll. Dashboardens HTML är kontrollerad via HTTP, ingen visuell granskning är genomförd. Inga signerade APK/MSIX-releasepaket eller verkliga sensorresultat finns i denna iteration. GitHub Actions är konfigurerad, men dess körresultat måste kontrolleras separat.
 
 Administrationsvy/auth och distribution införs i iteration 02. PostgreSQL/PostGIS, EF, SignalR, Channels, OpenTelemetry och beräkningsfunktioner tillkommer vid respektive funktion, enligt arkitekturen. iOS/MacCatalyst-målen och deras mallkod har tagits bort.
 
@@ -33,3 +33,17 @@ Implementationscommit: se iterations.json efter första committen. Commitdatum k
 Nästa iteration kan genomföras på användarens instruktion. Iteration 02 påbörjas inte automatiskt. Iteration 01 får inte markeras Verified innan återstående native-acceptanskriterier har verifierats.
  
 Implementationscommit: 53e3d6032114af7d9ec82ea584eb19682672f714. Commitdatum UTC: 2026-10-09T06:47:59.0000000+00:00.
+
+
+## Kompletterande byggkontroll 2026-10-09
+
+Kontroll genomförd i C:\Users\boris.gasic\source\repos\snhfhmw5tn-art\Sensor3 efter användarens godkännande av Android SDK-licenserna:
+
+- Android-workload 36.1.43 och Android SDK installerade; Microsoft OpenJDK 17.0.14 installerat.
+- ANDROID_HOME och JAVA_HOME registrerade som användarvariabler. Starta om Visual Studio för att läsa dem.
+- `dotnet build Sensor3.sln`: Android och Windows godkända, 0 fel, 0 varningar.
+- MSTest: 7 godkända, 0 misslyckade, 0 överhoppade.
+- APK genererad lokalt i Sensor3.Mobile/bin/Debug/net10.0-android. Debugsignering är avsedd för utveckling; ingen release är publicerad.
+- `adb devices`: ingen ansluten enhet. Status kvarstår Implemented, inte Verified.
+
+Denna komplettering ersätter den tidigare uppgiften om att Android-byggstödet saknas.
