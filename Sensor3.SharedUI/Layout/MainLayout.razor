@@ -1,0 +1,14 @@
+@inherits LayoutComponentBase
+@inject Sensor3.Contracts.BuildInfo Build
+
+<header><strong>Sensor 3</strong> | Version @Build.ApplicationVersion | Iteration @Build.LatestImplementedIteration.ToString("00")/18 | Commit @Build.GitCommitShortHash</header>
+<nav><a href="/">Start</a> · <a href="/about">Om / iterationshistorik</a></nav>
+
+@Body
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+

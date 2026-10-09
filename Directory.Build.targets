@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup><Sensor3BuildNumber Condition="'$(Sensor3BuildNumber)' == ''">1</Sensor3BuildNumber><Sensor3ReleaseChannel Condition="'$(Sensor3ReleaseChannel)' == ''">Development</Sensor3ReleaseChannel></PropertyGroup>
+  <Target Name="GenerateSensor3BuildInfo" BeforeTargets="AssignTargetPaths" Condition="'$(IsCrossTargetingBuild)' != 'true'">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)tools\Generate-BuildInfo.ps1&quot; -OutputPath &quot;$(MSBuildProjectDirectory)\$(IntermediateOutputPath)build-info.json&quot; -Platform &quot;$(TargetFramework)&quot; -Version &quot;$(Version)&quot; -BuildNumber &quot;$(Sensor3BuildNumber)&quot; -ReleaseChannel &quot;$(Sensor3ReleaseChannel)&quot;" />
+    <ItemGroup>
+      <EmbeddedResource Include="$(IntermediateOutputPath)build-info.json" LogicalName="Sensor3.BuildInfo.json" />
+      <EmbeddedResource Include="$(MSBuildThisFileDirectory)iterations.json" LogicalName="Sensor3.Iterations.json" />
+    </ItemGroup>
+  </Target>
+</Project>

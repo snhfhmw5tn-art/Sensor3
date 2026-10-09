@@ -1,0 +1,203 @@
+[
+  {
+    "number": 1,
+    "commitDateUtc": null,
+    "description": "Grundplattform, Git och versionsinformation",
+    "status": "Implemented",
+    "testResult": "7 passed, 0 failed, 0 skipped (MSTest); Windows solution build: 0 errors, 0 warnings; HTTP smoke passed",
+    "name": "Grundplattform, Git och versionsinformation",
+    "verifiedAtUtc": null,
+    "blockers": [
+      "Android workload/device unavailable; Android build and launch not verified",
+      "Native About UI manual verification pending"
+    ],
+    "latestCommit": "Unknown"
+  },
+  {
+    "number": 2,
+    "commitDateUtc": null,
+    "description": "Webbportal för installation och versionshantering",
+    "status": "NotStarted",
+    "testResult": "NotRun",
+    "name": "Webbportal för installation och versionshantering",
+    "verifiedAtUtc": null,
+    "blockers": [],
+    "latestCommit": "Unknown"
+  },
+  {
+    "number": 3,
+    "commitDateUtc": null,
+    "description": "Android APK, Windows MSIX och uppdateringar",
+    "status": "NotStarted",
+    "testResult": "NotRun",
+    "name": "Android APK, Windows MSIX och uppdateringar",
+    "verifiedAtUtc": null,
+    "blockers": [],
+    "latestCommit": "Unknown"
+  },
+  {
+    "number": 4,
+    "commitDateUtc": null,
+    "description": "Native sensorinsamling",
+    "status": "NotStarted",
+    "testResult": "NotRun",
+    "name": "Native sensorinsamling",
+    "verifiedAtUtc": null,
+    "blockers": [],
+    "latestCommit": "Unknown"
+  },
+  {
+    "number": 5,
+    "commitDateUtc": null,
+    "description": "Komplett sensordiagnostik",
+    "status": "NotStarted",
+    "testResult": "NotRun",
+    "name": "Komplett sensordiagnostik",
+    "verifiedAtUtc": null,
+    "blockers": [],
+    "latestCommit": "Unknown"
+  },
+  {
+    "number": 6,
+    "commitDateUtc": null,
+    "description": "GPS, WiFi och Bluetooth",
+    "status": "NotStarted",
+    "testResult": "NotRun",
+    "name": "GPS, WiFi och Bluetooth",
+    "verifiedAtUtc": null,
+    "blockers": [],
+    "latestCommit": "Unknown"
+  },
+  {
+    "number": 7,
+    "commitDateUtc": null,
+    "description": "Realtidskommunikation",
+    "status": "NotStarted",
+    "testResult": "NotRun",
+    "name": "Realtidskommunikation",
+    "verifiedAtUtc": null,
+    "blockers": [],
+    "latestCommit": "Unknown"
+  },
+  {
+    "number": 8,
+    "commitDateUtc": null,
+    "description": "Stegräknaren från Sensor App 2",
+    "status": "NotStarted",
+    "testResult": "NotRun",
+    "name": "Stegräknaren från Sensor App 2",
+    "verifiedAtUtc": null,
+    "blockers": [],
+    "latestCommit": "Unknown"
+  },
+  {
+    "number": 9,
+    "commitDateUtc": null,
+    "description": "Koordinattransformation och sensorfusion",
+    "status": "NotStarted",
+    "testResult": "NotRun",
+    "name": "Koordinattransformation och sensorfusion",
+    "verifiedAtUtc": null,
+    "blockers": [],
+    "latestCommit": "Unknown"
+  },
+  {
+    "number": 10,
+    "commitDateUtc": null,
+    "description": "Aktivitetsigenkänning",
+    "status": "NotStarted",
+    "testResult": "NotRun",
+    "name": "Aktivitetsigenkänning",
+    "verifiedAtUtc": null,
+    "blockers": [],
+    "latestCommit": "Unknown"
+  },
+  {
+    "number": 11,
+    "commitDateUtc": null,
+    "description": "Dynamisk bärpositionsklassificering",
+    "status": "NotStarted",
+    "testResult": "NotRun",
+    "name": "Dynamisk bärpositionsklassificering",
+    "verifiedAtUtc": null,
+    "blockers": [],
+    "latestCommit": "Unknown"
+  },
+  {
+    "number": 12,
+    "commitDateUtc": null,
+    "description": "Personens färdriktning oberoende av telefonen",
+    "status": "NotStarted",
+    "testResult": "NotRun",
+    "name": "Personens färdriktning oberoende av telefonen",
+    "verifiedAtUtc": null,
+    "blockers": [],
+    "latestCommit": "Unknown"
+  },
+  {
+    "number": 13,
+    "commitDateUtc": null,
+    "description": "PDR, position och hastighet",
+    "status": "NotStarted",
+    "testResult": "NotRun",
+    "name": "PDR, position och hastighet",
+    "verifiedAtUtc": null,
+    "blockers": [],
+    "latestCommit": "Unknown"
+  },
+  {
+    "number": 14,
+    "commitDateUtc": null,
+    "description": "Truckkörning och GPS-fusion",
+    "status": "NotStarted",
+    "testResult": "NotRun",
+    "name": "Truckkörning och GPS-fusion",
+    "verifiedAtUtc": null,
+    "blockers": [],
+    "latestCommit": "Unknown"
+  },
+  {
+    "number": 15,
+    "commitDateUtc": null,
+    "description": "WiFi- och BLE-positionering",
+    "status": "NotStarted",
+    "testResult": "NotRun",
+    "name": "WiFi- och BLE-positionering",
+    "verifiedAtUtc": null,
+    "blockers": [],
+    "latestCommit": "Unknown"
+  },
+  {
+    "number": 16,
+    "commitDateUtc": null,
+    "description": "Lagerkarta och kartmatchning",
+    "status": "NotStarted",
+    "testResult": "NotRun",
+    "name": "Lagerkarta och kartmatchning",
+    "verifiedAtUtc": null,
+    "blockers": [],
+    "latestCommit": "Unknown"
+  },
+  {
+    "number": 17,
+    "commitDateUtc": null,
+    "description": "Inspelning, simulering och jämförelse",
+    "status": "NotStarted",
+    "testResult": "NotRun",
+    "name": "Inspelning, simulering och jämförelse",
+    "verifiedAtUtc": null,
+    "blockers": [],
+    "latestCommit": "Unknown"
+  },
+  {
+    "number": 18,
+    "commitDateUtc": null,
+    "description": "Slutvalidering, säkerhet och publicering",
+    "status": "NotStarted",
+    "testResult": "NotRun",
+    "name": "Slutvalidering, säkerhet och publicering",
+    "verifiedAtUtc": null,
+    "blockers": [],
+    "latestCommit": "Unknown"
+  }
+]

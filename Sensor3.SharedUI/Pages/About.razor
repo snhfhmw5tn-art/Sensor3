@@ -1,0 +1,24 @@
+@page "/about"
+@inject Sensor3.Contracts.BuildInfo Build
+@inject IReadOnlyList<Sensor3.Contracts.IterationInfo> Iterations
+<h1>Om Sensor 3</h1>
+<p>Klient / denna applikation: @Build.ApplicationVersion (@Build.TargetPlatform)</p>
+<dl>
+    <dt>Implementerad / verifierad / publicerad iteration</dt><dd>@Build.LatestImplementedIteration / @Build.LatestVerifiedIteration / @Build.LatestPublishedIteration</dd>
+    <dt>Git-commit</dt><dd>@Build.GitCommitHash (@Build.GitBranch)</dd>
+    <dt>Commitdatum, svensk tid</dt><dd>@Sensor3.Core.BuildMetadata.SwedishTime(Build.GitCommitDateUtc)</dd>
+    <dt>Byggdatum, svensk tid</dt><dd>@Sensor3.Core.BuildMetadata.SwedishTime(Build.BuildDateUtc)</dd>
+    <dt>Releasekanal</dt><dd>@Build.ReleaseChannel</dd>
+    <dt>Build</dt><dd>@Build.BuildIdentifier; lokala ändringar: @Build.IsDirtyBuild</dd>
+    <dt>Serverversion</dt><dd>Unknown – serveranslutning implementeras i iteration 07.</dd>
+    <dt>Uppdateringsstatus</dt><dd>Ej implementerat – iteration 03.</dd>
+</dl>
+<label>Verifierade iterationer: @Iterations.Count(x => x.Status == Sensor3.Contracts.IterationStatus.Verified)/18</label>
+<progress max="18" value="@Iterations.Count(x => x.Status == Sensor3.Contracts.IterationStatus.Verified)"></progress>
+<table><thead><tr><th>Iteration</th><th>Status</th><th>Historik</th></tr></thead><tbody>
+@foreach (var item in Iterations)
+{
+    <tr><td>@item.Number.ToString("00"): @item.Name <p>@item.Description</p></td><td>@item.Status</td>
+    <td>Commit: @item.LatestCommit<br />Commitdatum: @Sensor3.Core.BuildMetadata.SwedishTime(item.CommitDateUtc)<br />Verifierad: @Sensor3.Core.BuildMetadata.SwedishTime(item.VerifiedAtUtc)<br />Tester: @item.TestResult<br />@string.Join("; ", item.Blockers)</td></tr>
+}
+</tbody></table>
