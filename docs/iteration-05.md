@@ -58,3 +58,9 @@ Slutbygglogg: `artifacts/iteration-05-build.log`. Tester: `artifacts/test-result
 Installera/starta på Android och Windows med sensorer. Inventera samtliga, neka/bevilja relevant behörighet och kontrollera korrekta statusar. Välj IMU och andra sensorer, verifiera kanalernas enheter, tidsstämplar, native kvalitet och faktisk takt vid minst två begärda frekvenser. Kontrollera grafer mot rörelse och filterutjämning mot rådata; utjämning får inte ersätta råvärden. Prova inga prov före start, avbrott, återkomst, fokus-/bakgrundsstopp, nya sessioner och fel. Granska läsbarhet i Android och Windows vid små fönster. Markera Verified först efter dokumenterade hårdvaruprov; ingen release publiceras av denna iteration.
 
 Implementationscommit med UTC-datum registreras efter godkänt iterationsbygge; BuildInfo visar exakt byggd HEAD. Nästa möjliga iteration är **06 – GPS, WiFi och Bluetooth**, efter användarens instruktion.
+
+## Korrigering efter iterationens bygge
+
+Diagnostikvyn slog tidigare upp ISensorProvider vid varje åtkomst, även i DisposeAsync. Om WebView/Blazor-circuit stängde sin tjänstecontainer först kunde uppslaget kasta ObjectDisposedException. Native-tjänster hämtas nu en gång vid initiering; avslut är idempotent, timerjobb respekterar avslut och en redan stängd native provider hanteras vid avregistrering. Inga nya timerjobb skapas om vyn avslutats under inventering.
+
+Regressionstestet stänger tjänstecontainern före HTML-renderern/komponenten och verifierar att avslut fungerar. Uppdaterad testsuite: 117 passed, 0 failed, 0 skipped. Android/Windows-bygge verifieras även efter korrigeringen; logg artifacts/diagnostics-disposal-build.log och tester artifacts/test-results/diagnostics-disposal.trx.

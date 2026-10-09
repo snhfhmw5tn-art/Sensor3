@@ -91,8 +91,8 @@ else
     </article>
 }
 @code {
-    private ISensorProvider? Provider => Services.GetService(typeof(ISensorProvider)) as ISensorProvider;
-    private ISensorPermissionService? PermissionService => Services.GetService(typeof(ISensorPermissionService)) as ISensorPermissionService;
+    private ISensorProvider? Provider;
+    private ISensorPermissionService? PermissionService;
     private SensorDiagnosticsSnapshot snapshot = new(null, []);
     private IReadOnlyList<SensorStatistics> nativeStatistics = [];
     private readonly HashSet<string> selected = [];
@@ -100,9 +100,13 @@ else
     private double frequency = 50;
     private bool busy;
     private volatile bool disposed;
+    private int disposalStarted;
     private System.Threading.Timer? refresh;
     protected override async Task OnInitializedAsync()
     {
+        // Resolve optional native services once, while the component's DI scope is alive.
+        Provider = Services.GetService(typeof(ISensorProvider)) as ISensorProvider;
+        PermissionService = Services.GetService(typeof(ISensorPermissionService)) as ISensorPermissionService;
         if (Provider is { } provider)
         {
             provider.ReadingReceived += Store.Receive;
@@ -110,7 +114,14 @@ else
             await Discover();
         }
         else snapshot = Store.GetSnapshot();
-        refresh = new(_ => { if (!disposed) _ = InvokeAsync(Refresh); }, null, 200, 200);
+        if (!disposed) refresh = new(_ => { _ = RefreshAsync(); }, null, 200, 200);
+    }
+    private async Task RefreshAsync()
+    {
+        if (disposed) return;
+        try { await InvokeAsync(Refresh); }
+        catch (ObjectDisposedException) when (disposed) { }
+        catch (TaskCanceledException) when (disposed) { }
     }
     private void Refresh()
     {
@@ -152,11 +163,13 @@ else
     }
     public async ValueTask DisposeAsync()
     {
+        if (System.Threading.Interlocked.Exchange(ref disposalStarted, 1) != 0) return;
         disposed = true;
         if (refresh is not null) await refresh.DisposeAsync();
         if (Provider is not { } provider) return;
         // Keep subscribed through stop so retained diagnostic data gets an accurate Inactive status.
         try { await provider.StopAsync(); }
+        catch (ObjectDisposedException) { /* The native host may dispose singleton services before the WebView. */ }
         finally { provider.ReadingReceived -= Store.Receive; provider.StateChanged -= Store.SetState; }
     }
 }

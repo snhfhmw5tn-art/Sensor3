@@ -11,18 +11,26 @@ namespace Sensor3.Tests;
 [TestClass]
 public sealed class SensorDiagnosticsRenderingTests
 {
-    private static async Task<string> RenderAsync(SensorDiagnosticsStore store)
+    private static async Task<string> RenderAsync(SensorDiagnosticsStore store, bool disposeServicesFirst = false)
     {
         var services = new ServiceCollection();
         services.AddLogging(); services.AddSingleton(store);
         services.AddSingleton(new BuildInfo { ApplicationVersion = "server-version", GitCommitHash = "server-commit" });
         await using var scope = services.BuildServiceProvider();
         await using var renderer = new HtmlRenderer(scope, scope.GetRequiredService<ILoggerFactory>());
-        return await renderer.Dispatcher.InvokeAsync(async () =>
+        var html = await renderer.Dispatcher.InvokeAsync(async () =>
         {
             var component = await renderer.RenderComponentAsync<SensorDiagnosticsView>(ParameterView.Empty);
             return component.ToHtmlString();
         });
+        if (disposeServicesFirst) await scope.DisposeAsync();
+        return html;
+    }
+    [TestMethod]
+    public async Task TestThat_diagnostic_component_can_close_after_service_scope_is_disposed()
+    {
+        var html = await RenderAsync(new(), disposeServicesFirst: true);
+        StringAssert.Contains(html, "Sensordiagnostik");
     }
     [TestMethod]
     public async Task TestThat_browser_without_native_data_renders_unknown_client_without_controls_or_graphs()
