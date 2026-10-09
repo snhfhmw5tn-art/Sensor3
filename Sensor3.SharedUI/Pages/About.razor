@@ -1,4 +1,5 @@
 @page "/about"
+@inject IServiceProvider Services
 @inject Sensor3.Contracts.BuildInfo Build
 @inject IReadOnlyList<Sensor3.Contracts.IterationInfo> Iterations
 <h1>Om Sensor 3</h1>
@@ -10,7 +11,7 @@
     <dt>Byggdatum, svensk tid</dt><dd>@Sensor3.Core.BuildMetadata.SwedishTime(Build.BuildDateUtc)</dd>
     <dt>Releasekanal</dt><dd>@Build.ReleaseChannel</dd>
     <dt>Build</dt><dd>@Build.BuildIdentifier; lokala ändringar: @Build.IsDirtyBuild</dd>
-    <dt>Serverversion</dt><dd>Unknown – serveranslutning implementeras i iteration 07.</dd>
+    <dt>Senast bekräftad serverversion</dt><dd>@(serverBuild?.ApplicationVersion ?? "Unknown") · commit @(serverBuild?.GitCommitHash ?? "Unknown")</dd>
     <dt>Uppdateringsstatus</dt><dd><a href="/updates">Visa installerad och tillgänglig version</a></dd>
 </dl>
 <label>Verifierade iterationer: @Iterations.Count(x => x.Status == Sensor3.Contracts.IterationStatus.Verified)/18</label>
@@ -22,3 +23,8 @@
     <td>Commit: @item.LatestCommit<br />Commitdatum: @Sensor3.Core.BuildMetadata.SwedishTime(item.CommitDateUtc)<br />Verifierad: @Sensor3.Core.BuildMetadata.SwedishTime(item.VerifiedAtUtc)<br />Tester: @item.TestResult<br />@string.Join("; ", item.Blockers)</td></tr>
 }
 </tbody></table>
+
+@code {
+    private Sensor3.Contracts.BuildInfo? serverBuild;
+    protected override void OnInitialized() => serverBuild = (Services.GetService(typeof(Sensor3.Contracts.ITelemetryClient)) as Sensor3.Contracts.ITelemetryClient)?.ServerBuild;
+}

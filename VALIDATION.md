@@ -29,3 +29,5 @@ Ett manuellt förgrundsprov av bmi26x Accelerometer Non-wakeup på ansluten Zebr
 Tidigare APK-manifest/installationskontroller ska inte tolkas som bevis för faktisk managed runtime-version. Slutkontrollen efter ren commit jämför skärmens commit med git HEAD.
 
 Browserprov: 20s syntetisk gång spelades vid8×, 4004händelser/40steg, tydlig SYNTHETIC-märkning och felmått. CSV-export skapade faktiskt Downloads/sensor3-session.csv (2271670byte). Kartans 1/5/10m-rutnät och läsbara 5m-etiketter kontrollerades visuellt. Äldre browserfel vid avsiktligt stoppad preview är inte fel under detta körprov.
+
+Windows-klienten startades och dess accessibility-träd renderade version0.18.0, iteration18 och clean-build-commit495364b. Windows låsskärm hindrade skärmbild/vidare interaktion; inget försök gjordes att låsa upp eller kringgå den. Detta är ett start-/renderingsprov via accessibility, inte signerad MSIX-installation eller fysisk Windows-sensorvalidering. Om-sidan visar senast bekräftad telemetriservers metadata, eller Unknown när sådan saknas.
