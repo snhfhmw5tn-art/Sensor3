@@ -29,7 +29,7 @@
   },
   {
     "number": 3,
-    "commitDateUtc": null,
+    "commitDateUtc": "2026-10-09T13:23:09.0000000+00:00",
     "description": "Android APK, Windows MSIX och uppdateringar",
     "status": "Implemented",
     "testResult": "57 passed, 0 failed, 0 skipped (MSTest); 32 HTTP security/distribution checks passed; Android + Windows VS MSBuild: 0 errors/warnings; unsigned self-contained Windows Release MSIX and AppInstaller generation passed; native signed upgrade tests NotRun",
@@ -40,7 +40,7 @@
       "Production HTTPS and signing identities not supplied; signed MSIX and certificate trust not verified",
       "Automatic approval rejected private signing-key test creation; key script not executed"
     ],
-    "latestCommit": "Unknown"
+    "latestCommit": "2c9a32af8314c9eaacb1e7e777cbec654c9aad51"
   },
   {
     "number": 4,
