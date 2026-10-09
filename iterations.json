@@ -237,7 +237,7 @@
   },
   {
     "number": 18,
-    "commitDateUtc": "2026-10-09T19:50:46+02:00",
+    "commitDateUtc": "2026-10-09T19:54:10+02:00",
     "description": "Slutvalidering, säkerhet och publicering",
     "status": "Implemented",
     "testResult": "Android/Windows solution build: 0 errors, 0 warnings. MSTest: 214 passed, 0 failed/skipped. API/dashboard smoke passed; 32 distribution/security checks passed. TC53: version0.18.0 runtime, 2810 valid accelerometer samples at50.04Hz, explicit stop. Final clean-HEAD metadata check follows commit; field acceptance/production signing NotRun.",
@@ -247,6 +247,6 @@
       "Oberoende fysisk ground truth saknas; researchmodeller behöver kalibrering och fältprov.",
       "Produktions-HTTPS-origin och Android/Windows-signering saknas; ingen produktionsrelease publicerad."
     ],
-    "latestCommit": "beb0de40d121e78bcd6509ca88e24085f282b374"
+    "latestCommit": "53491820108cebcf84241277cea81d3e51a3197b"
   }
 ]
