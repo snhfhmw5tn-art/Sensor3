@@ -130,7 +130,7 @@
   },
   {
     "number": 10,
-    "commitDateUtc": null,
+    "commitDateUtc": "2026-10-09T18:00:43+02:00",
     "description": "Aktivitetsigenkänning",
     "status": "Implemented",
     "testResult": "155 passed, 0 failed, 0 skipped; Android + Windows VS MSBuild: 0 errors, 0 warnings; HTTP metadata/browser smoke passed",
@@ -140,7 +140,7 @@
       "No measured forklift training/validation dataset",
       "Physical cross-person/carry-mode classification and confusion matrix pending"
     ],
-    "latestCommit": "Unknown"
+    "latestCommit": "ad4d0efb4d909455cda6150dc1c70d3ab2dadbde"
   },
   {
     "number": 11,
