@@ -1,0 +1,56 @@
+@page "/admin/releases"
+@using Microsoft.AspNetCore.Authorization
+@using Sensor3.Contracts
+@using Sensor3.Distribution
+@attribute [Authorize(Roles = DistributionHosting.AdminRole)]
+@inject ReleaseStore Store
+<PageTitle>Releaseadministration – Sensor 3</PageTitle>
+<h1>Releaseadministration</h1>
+<form method="post" action="/admin/logout" data-enhance="false"><AntiforgeryToken /><button>Logga ut</button></form>
+<p>Publicera endast signerade och kontrollerade installationspaket. Katalogen ändrar inte iterationsstatus. Filtyp, storlek och checksumma kontrolleras av servern.</p>
+@if (Error is not null) { <p role="alert">@Error</p> }
+<h2>Publicera version</h2>
+<form method="post" enctype="multipart/form-data" action="/admin/releases/publish" data-enhance="false" class="publish-form">
+    <AntiforgeryToken />
+    <label>Release-manifest (JSON)<textarea name="manifest" rows="20" required maxlength="32768" placeholder="@Example"></textarea></label>
+    <label>Installationspaket (.apk eller .msix)<input name="artifact" type="file" accept=".apk,.msix" required /></label>
+    <button>Publicera kontrollerat paket</button>
+</form>
+<h2>Publicerade och återkallade versioner</h2>
+@if (Releases.Count == 0) { <p>Inga versioner har publicerats.</p> }
+@foreach (var release in Releases.OrderByDescending(x => x.PublishedAtUtc))
+{
+    <section class="release-card"><h3>@release.Manifest.Platform @release.Manifest.Version · build @release.Manifest.BuildNumber · @release.Manifest.Channel</h3>
+    <p>@(release.IsRevoked ? "Återkallad – nedladdning spärrad" : "Publicerad") · @Sensor3.Core.BuildMetadata.SwedishTime(release.PublishedAtUtc)</p>
+    <p class="notes">@release.Manifest.ReleaseNotes</p>
+    <p class="hash">SHA-256: @release.Artifact.Sha256</p>
+    @if (!release.IsRevoked)
+    {
+        <form method="post" action="@($"/admin/releases/{release.Id}/revoke")" data-enhance="false"><AntiforgeryToken /><button>Återkalla versionen</button></form>
+    }
+    </section>
+}
+@code {
+    private IReadOnlyList<ApplicationRelease> Releases = [];
+    private string? Error;
+    private const string Example = """
+    {
+      "platform": "Android",
+      "channel": "Development",
+      "version": "0.2.0",
+      "buildNumber": 2,
+      "gitCommitHash": "ANGE_PAKETETS_VERKLIGA_COMMIT",
+      "gitCommitDateUtc": "ANGE_PAKETETS_VERKLIGA_COMMITDATUM",
+      "iterationNumber": 2,
+      "releaseNotes": "Beskriv ändringarna och genomförda paketkontroller.",
+      "expectedSha256": "ANGE_FILENS_SHA256",
+      "compatibility": { "minimumServerVersion": "0.2.0", "maximumServerVersion": null },
+      "updatePolicy": { "mandatory": false }
+    }
+    """;
+    protected override async Task OnInitializedAsync()
+    {
+        try { Releases = await Store.ListAsync(); }
+        catch (Exception exception) when (exception is System.IO.IOException or System.IO.InvalidDataException) { Error = "Releasekatalogen kunde inte läsas."; }
+    }
+}

@@ -1,0 +1,76 @@
+@page "/download"
+@using Sensor3.Contracts
+@using Sensor3.Distribution
+@inject ReleaseStore Store
+@inject BuildInfo Build
+<PageTitle>Ladda ned Sensor 3</PageTitle>
+<h1>Ladda ned Sensor 3</h1>
+<p>Installera Android- eller Windows-klienten. Välj alltid plattform och releasekanal för din enhet.</p>
+<form method="get" action="/download" data-enhance="false" class="selection">
+    <label>Plattform <select name="platform"><option value="" selected="@(string.IsNullOrEmpty(Platform))">Båda plattformarna</option><option value="Android" selected="@(Platform == "Android")">Android</option><option value="Windows" selected="@(Platform == "Windows")">Windows</option></select></label>
+    <label>Releasekanal <select name="channel"><option value="Stable" selected="@(SelectedChannel == ReleaseChannel.Stable)">Stable</option><option value="Beta" selected="@(SelectedChannel == ReleaseChannel.Beta)">Beta</option><option value="Development" selected="@(SelectedChannel == ReleaseChannel.Development)">Development</option></select></label>
+    <button>Visa versioner</button>
+</form>
+@if (Error is not null) { <p role="alert">@Error</p> }
+else
+{
+    <div class="release-grid">
+    @foreach (var platform in Platforms)
+    {
+        var release = ReleaseSelection.Latest(Releases, platform, SelectedChannel, Build.ApplicationVersion);
+        <section class="release-card">
+            <h2>@platform-klient</h2>
+            @if (release is null)
+            {
+                <p>Ingen kompatibel version har publicerats i @SelectedChannel.</p>
+                <p>Inget installationspaket finns att ladda ned ännu.</p>
+            }
+            else
+            {
+                <h3>Version @release.Manifest.Version · build @release.Manifest.BuildNumber</h3>
+                <dl>
+                    <dt>Releasekanal</dt><dd>@release.Manifest.Channel</dd>
+                    <dt>Publicerad, svensk tid</dt><dd>@Sensor3.Core.BuildMetadata.SwedishTime(release.PublishedAtUtc)</dd>
+                    <dt>Iteration</dt><dd>@release.Manifest.IterationNumber.ToString("00")/18</dd>
+                    <dt>Git-commit</dt><dd class="hash">@release.Manifest.GitCommitHash</dd>
+                    <dt>Commitdatum, svensk tid</dt><dd>@Sensor3.Core.BuildMetadata.SwedishTime(release.Manifest.GitCommitDateUtc)</dd>
+                    <dt>Filstorlek</dt><dd>@release.Artifact.FileSize.ToString("N0") byte</dd>
+                    <dt>SHA-256</dt><dd class="hash">@release.Artifact.Sha256</dd>
+                    <dt>Kompatibel serverversion</dt><dd>@release.Manifest.Compatibility.MinimumServerVersion – @(release.Manifest.Compatibility.MaximumServerVersion ?? "ingen övre gräns")</dd>
+                    <dt>Uppdatering</dt><dd>@(release.Manifest.UpdatePolicy.Mandatory ? "Obligatorisk" : "Valfri")</dd>
+                </dl>
+                <p class="notes">@release.Manifest.ReleaseNotes</p>
+                <a class="download-button" href="@($"/api/releases/{release.Id}/download")" data-enhance-nav="false">Ladda ned @release.Artifact.FileName</a>
+            }
+            <h3>Installationsinstruktioner</h3>
+            @if (platform == ClientPlatform.Android)
+            {
+                <ol><li>Ladda ned APK-filen på Android-enheten.</li><li>Öppna filen och följ Androids installationsdialog. Tillåt vid behov installation från denna källa.</li><li>Kontrollera utgivaren innan du godkänner och öppna sedan Sensor 3.</li></ol>
+            }
+            else
+            {
+                <ol><li>Ladda ned MSIX-filen till Windows 10/11.</li><li>Öppna den med App Installer och kontrollera utgivaren.</li><li>Installera bara ett paket med ett betrott signeringscertifikat.</li></ol>
+            }
+        </section>
+    }
+    </div>
+}
+<p>Server / portal: @Build.ApplicationVersion · iteration @Build.LatestImplementedIteration.ToString("00") · commit @Build.GitCommitShortHash. Paketversion visas separat ovan.</p>
+@code {
+    [SupplyParameterFromQuery(Name = "platform")] public string? Platform { get; set; }
+    [SupplyParameterFromQuery(Name = "channel")] public string? Channel { get; set; }
+    private ReleaseChannel SelectedChannel = ReleaseChannel.Stable;
+    private ClientPlatform[] Platforms = [ClientPlatform.Android, ClientPlatform.Windows];
+    private IReadOnlyList<ApplicationRelease> Releases = [];
+    private string? Error;
+    protected override async Task OnParametersSetAsync()
+    {
+        Error = null;
+        if (!string.IsNullOrEmpty(Channel) && (!Enum.TryParse(Channel, true, out SelectedChannel) || !Enum.IsDefined(SelectedChannel))) { Error = "Välj en giltig releasekanal."; return; }
+        if (string.IsNullOrEmpty(Platform)) Platforms = [ClientPlatform.Android, ClientPlatform.Windows];
+        else if (Enum.TryParse<ClientPlatform>(Platform, true, out var selected) && Enum.IsDefined(selected)) Platforms = [selected];
+        else { Error = "Välj Android eller Windows."; return; }
+        try { Releases = await Store.ListAsync(); }
+        catch (Exception exception) when (exception is System.IO.IOException or System.IO.InvalidDataException) { Error = "Releaseinformationen är tillfälligt otillgänglig. Försök igen senare."; }
+    }
+}

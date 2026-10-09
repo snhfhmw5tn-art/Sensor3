@@ -1,0 +1,15 @@
+body { font-family: system-ui, sans-serif; color: #182b40; background: #f5f7fa; margin: 0; }
+header, nav, main { padding: 1rem clamp(1rem, 4vw, 3rem); }
+header { background: #162d49; color: white; }
+nav { background: white; }
+main { max-width: 1200px; margin: auto; }
+a { color: #145da0; } h1 { font-size: clamp(1.8rem, 4vw, 2.5rem); }
+.release-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 1.5rem; }
+.release-card { background: white; border: 1px solid #dae2ec; border-radius: .7rem; padding: 1.5rem; margin: 1.5rem 0; }
+label { display: block; margin: 1rem 0; } select, input, textarea, button { font: inherit; padding: .65rem; max-width: 100%; box-sizing: border-box; }
+input, textarea { display: block; margin-top: .4rem; } textarea { width: 100%; }
+button, .download-button { background: #145da0; color: white; border: 0; border-radius: .3rem; padding: .75rem 1rem; cursor: pointer; }
+.download-button { display: inline-block; text-decoration: none; } .hash { overflow-wrap: anywhere; font-family: monospace; }
+.notes { white-space: pre-wrap; } dt { font-weight: 600; margin-top: .6rem; } dd { margin-left: 0; }
+.selection { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+[role=alert] { background: #fff0ef; border-left: 4px solid #aa2020; padding: 1rem; }

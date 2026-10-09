@@ -17,11 +17,11 @@
     "number": 2,
     "commitDateUtc": null,
     "description": "Webbportal för installation och versionshantering",
-    "status": "NotStarted",
-    "testResult": "NotRun",
+    "status": "Implemented",
+    "testResult": "37 passed, 0 failed, 0 skipped (MSTest); 26 HTTP distribution/security checks passed; Android + Windows VS MSBuild succeeded without errors/warnings; desktop browser and mobile-width portal checked",
     "name": "Webbportal för installation och versionshantering",
     "verifiedAtUtc": null,
-    "blockers": [],
+    "blockers": ["Physical Android browser not verified", "Signed package installation/publication validation remains in iteration 03; no actual release published"],
     "latestCommit": "Unknown"
   },
   {

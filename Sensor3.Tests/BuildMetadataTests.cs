@@ -12,7 +12,7 @@ public sealed class BuildMetadataTests
     public void TestThat_build_metadata_is_embedded()
     {
         var info = BuildMetadata.Load(typeof(BuildMetadataTests).Assembly);
-        Assert.AreEqual("0.1.0", info.ApplicationVersion);
+        Assert.AreEqual("0.2.0", info.ApplicationVersion);
         Assert.IsNotNull(info.BuildDateUtc);
         Assert.AreEqual(TimeSpan.Zero, info.BuildDateUtc.Value.Offset);
         Assert.IsLessThanOrEqualTo(info.LatestImplementedIteration, info.LatestVerifiedIteration);

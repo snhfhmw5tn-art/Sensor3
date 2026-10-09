@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+    <UserSecretsId>Sensor3-Dashboard-Distribution</UserSecretsId>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
@@ -9,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Sensor3.SharedUI\Sensor3.SharedUI.csproj" />
     <ProjectReference Include="..\Sensor3.Core\Sensor3.Core.csproj" />
+    <ProjectReference Include="..\Sensor3.Distribution\Sensor3.Distribution.csproj" />
   </ItemGroup>
 
 </Project>

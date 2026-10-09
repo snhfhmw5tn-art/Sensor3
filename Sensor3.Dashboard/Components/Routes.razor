@@ -1,0 +1,10 @@
+@using Microsoft.AspNetCore.Components.Authorization
+<Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(Sensor3.SharedUI._Imports).Assembly }">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.PortalLayout)">
+            <NotAuthorized><h1>Inloggning krävs</h1><a href="/admin/login">Logga in som releaseadministratör</a></NotAuthorized>
+        </AuthorizeRouteView>
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound><LayoutView Layout="typeof(Layout.PortalLayout)"><h1>Sidan finns inte</h1></LayoutView></NotFound>
+</Router>

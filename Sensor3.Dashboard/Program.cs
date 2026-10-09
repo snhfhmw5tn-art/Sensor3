@@ -1,6 +1,9 @@
 using Sensor3.Dashboard.Components;
+using Sensor3.Distribution;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.AddDistribution();
+builder.Services.AddCascadingAuthenticationState();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -18,11 +21,12 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.UseHttpsRedirection();
 
-app.UseAntiforgery();
+app.UseDistribution();
+app.MapDistribution();
 
 app.MapStaticAssets();
 

@@ -6,7 +6,7 @@ Installera även MAUI-komponentgrupperna Android, Windows, Blazor och Shared som
 
 Byggkonfigurationen hittar även lokalt installerad Android SDK i `%LOCALAPPDATA%\Android\Sdk` och Java i `%LOCALAPPDATA%\Microsoft\Jdk` när inga explicita SDK-sökvägar har angetts. Befintliga explicita sökvägar har företräde.
 
-Native Android/Windows-klient, ASP.NET Core API och Blazor-dashboard, .NET 10 / C# 14. Version 0.1.0. Arbetet följer [masterplanen](docs/MASTERPLAN.md), en iteration i taget.
+Native Android/Windows-klient, ASP.NET Core API och Blazor-dashboard, .NET 10 / C# 14. Version 0.2.0. Arbetet följer [masterplanen](docs/MASTERPLAN.md), en iteration i taget.
 
 ## Bygg och kör
 
@@ -26,6 +26,16 @@ För båda native-målen: `dotnet build Sensor3.sln` efter installation av båda
 BuildInfo genereras automatiskt och bäddas in i varje assembly: faktisk Git-hash/commitdatum, separat UTC-byggdatum, dirty-status och iterationsmanifest. För reproducerbar spårbarhet bygg från en ren commit. Saknat commitdatum visas som Unknown. Buildnummer/releasekanal anges via `-p:Sensor3BuildNumber=... -p:Sensor3ReleaseChannel=Development`.
 
 Se [iterationshistorik](ITERATIONS.md), [arkitektur](ARCHITECTURE.md) och [verifieringsrapport](docs/iteration-01.md). Inga signerade installationspaket publiceras i iteration 01.
+
+## Distributionsportal – iteration 02
+
+Öppna dashboardens `/download` i Android- eller Windows-webbläsaren. Plattform föreslås från user agent när möjligt; manuellt val och Development/Beta/Stable finns alltid. Inga exempelpaket läggs i releasekatalogen. Klientpaketens metadata visas separat från portal/serverversion.
+
+Administration: kör `./tools/Configure-DistributionAdmin.ps1` i PowerShell för att välja lösenord och spara PBKDF2-hash i båda hostprojektens lokala user-secrets. Kör sedan API/dashboard i Development och öppna `/admin/releases`. Utan konfigurerat konto är administration avstängd. Lösenordet skrivs aldrig i Git eller loggar. User-secrets är lokal utvecklingskonfiguration, inte krypterad produktionslagring. I produktion används HTTPS och en hemlighetshanterare för `Distribution:AdminUsername` och `Distribution:AdminPasswordHash` (miljövariabler med dubbla understreck stöds). Se [iterationsrapporten](docs/iteration-02.md) för manifest och driftkrav.
+
+API och dashboard ska ha samma `Distribution:StorageRoot`, med skrivrättighet bara för serverkontot och utanför webroot. Standard är `%LOCALAPPDATA%\Sensor3\distribution`. Default max paketstorlek är 100 MiB (`Distribution:MaximumArtifactBytes`, upp till 1 GiB). GET `/api/releases`, `/api/releases/latest?platform=Android&channel=Stable` och `/api/updates/check?platform=Android&channel=Stable&version=0.1.0&buildNumber=1` finns på båda hostarna. GET `/api/releases/{id}/download` kontrollerar återkallelse och integritet. Okänd kanal/plattform ger 400; saknad kompatibel release ger 404 på latest och NoCompatibleRelease på updates/check.
+
+Publicera endast kontrollerade och signerade paket via administratörsformuläret. Paketsignaturer/uppgraderingar ingår i iteration 03; ingen faktisk APK/MSIX-release har publicerats här. Kör `./tools/Distribution-Smoke-Test.ps1` för HTTP-/säkerhetskontroller med tillfälliga syntetiska testfiler. Verify.ps1 kör även dessa kontroller.
 
 ## Android-byggmiljö
 

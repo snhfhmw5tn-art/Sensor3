@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sv">
 
 <head>
     <meta charset="utf-8" />
@@ -8,14 +8,16 @@
     <ResourcePreloader />
     <link rel="stylesheet" href="_content/Sensor3.SharedUI/app.css" />
     <link rel="stylesheet" href="Sensor3.Dashboard.styles.css" />
+    <link rel="stylesheet" href="distribution.css" />
     <ImportMap />
-    <HeadOutlet @rendermode="InteractiveServer" />
+    <HeadOutlet />
 </head>
 
 <body>
-    <Routes @rendermode="InteractiveServer" />
+    <Sensor3.Dashboard.Components.Routes />
     <ReconnectModal />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
+    <script src="distribution.js"></script>
 </body>
 
 </html>

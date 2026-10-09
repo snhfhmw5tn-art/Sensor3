@@ -2,10 +2,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Sensor3.Core\Sensor3.Core.csproj" />
+    <ProjectReference Include="..\Sensor3.Distribution\Sensor3.Distribution.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+    <UserSecretsId>Sensor3-Api-Distribution</UserSecretsId>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
