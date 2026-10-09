@@ -88,7 +88,7 @@
   },
   {
     "number": 7,
-    "commitDateUtc": null,
+    "commitDateUtc": "2026-10-09T17:32:27+02:00",
     "description": "Realtidskommunikation",
     "status": "Implemented",
     "testResult": "132 passed, 0 failed, 0 skipped; Android + Windows build: 0 errors, 0 warnings; real loopback HTTPS/SignalR and 8-client isolation passed",
@@ -98,7 +98,7 @@
       "Physical Android/Windows HTTPS streaming and mobile network disturbance tests pending",
       "Production HTTPS endpoint and device credentials need configuration"
     ],
-    "latestCommit": "Unknown"
+    "latestCommit": "ee13b0bcea28ed6843ceb9c5b1b302dd365becde"
   },
   {
     "number": 8,
