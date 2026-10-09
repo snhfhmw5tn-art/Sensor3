@@ -46,6 +46,10 @@ Status kvarstår **Implemented**, inte Verified. Iteration 02 har inte påbörja
 
 ### Komplettering: SDK-sökvägar från IDE
 
+**Slutlig IDE-kontroll, 2026-10-09 kl. 14:17:** MAUI-grupperna Android, Windows, Blazor och Shared installerades via Visual Studio Installer (avslutningskod 0), inklusive OpenJDK 21.0.8. Rätt solution öppnades därefter i Visual Studio utan administratörsläge. Byggning startades i IDE:n med Ctrl+Shift+B. Visual Studios Output rapporterade **17 succeeded, 0 failed, 0 up-to-date, 0 skipped**, byggtid **1:38,524**. Error List med Entire Solution och Build + IntelliSense visade **0 Errors, 0 Warnings, 0 Messages**. XA5300 och tidigare Java-undantag med `homePath` återkom inte. Sju MSTest-fall och API/dashboard-smoketest passerade efter IDE-bygget med korrekt metadata för ren commit `badba0a`. Visual Studios byggfel är därmed verifierat löst i denna installation. Native runtime-kontroller enligt ovan återstår; iterationsstatus ändras inte.
+
+Följande stycken beskriver de tidigare felsökningsstegen före installationen:
+
 Ny byggkontroll på ren commit `ca33b6a`: hela solutionen byggdes med Visual Studios MSBuild (Debug, restore, båda native-målen), avslutningskod 0 utan rapporterade fel/varningar. Android `Compile` med DesignTimeBuild=true, BuildingInsideVisualStudio=true och BuildProjectReferences=false passerade med 0 fel/0 varningar på 2,93 sekunder. Alla sju MSTest-fall samt API/dashboard-smoketest passerade med korrekt Git-metadata. Lokala loggar: `artifacts/visual-studio-build.log` och `artifacts/android-design-time-build.log`. XA5300 reproducerades inte i dessa kontroller. IDE-komponenterna saknas fortfarande i installationslistan; resultatet bekräftar inte att IDE:s aktiva felpanel är rättad.
 
 Fortsatt XA5300 ledde till kontroll av Visual Studio-installationens `selectedPackages`: MAUI-grupperna Android, Windows, Blazor och Shared saknas. Dessa deklareras nu i `.vsconfig`. Installation återstår medan Visual Studio körs. .NET SDK-workloads via CLI är installerade sedan tidigare; IDE-komponenterna är ett separat installationskrav.
