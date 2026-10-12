@@ -2,12 +2,14 @@ using Sensor3.Infrastructure;
 using Sensor3.Core;
 using Sensor3.Distribution;
 var builder = WebApplication.CreateBuilder(args);
+builder.AddTrustedReverseProxy();
 builder.AddDistribution();
 builder.AddSensorTelemetry();
 builder.Services.AddHealthChecks();
 builder.Services.AddSingleton(BuildMetadata.Load(typeof(Program).Assembly));
 builder.Services.AddSingleton(BuildMetadata.LoadIterations(typeof(Program).Assembly));
 var app = builder.Build();
+app.UseForwardedHeaders();
 if (!app.Environment.IsDevelopment()) { app.UseHsts(); app.UseHttpsRedirection(); }
 app.UseDistribution();
 app.MapDistribution();

@@ -3,6 +3,7 @@ using Sensor3.Dashboard.Components;
 using Sensor3.Distribution;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.AddTrustedReverseProxy();
 builder.AddDistribution();
 builder.AddSensorTelemetry();
 builder.Services.AddCascadingAuthenticationState();
@@ -18,6 +19,7 @@ builder.Services.AddHealthChecks();
 builder.Services.AddScoped<Sensor3.Sensors.SensorDiagnosticsStore>();
 builder.Services.AddScoped<Sensor3.Contracts.ISensorDiagnosticsReceiver>(x => x.GetRequiredService<Sensor3.Sensors.SensorDiagnosticsStore>());
 var app = builder.Build();
+app.UseForwardedHeaders();
 app.MapHealthChecks("/health");
 
 // Configure the HTTP request pipeline.
