@@ -1,15 +1,36 @@
 @inherits LayoutComponentBase
 @inject Sensor3.Contracts.BuildInfo Build
-
-<header><strong>Sensor 3</strong> | Version @Build.ApplicationVersion | Iteration @Build.LatestImplementedIteration.ToString("00")/18 | Commit @Build.GitCommitShortHash</header>
-<nav><a href="/">Start</a> · <a href="/about">Om / iterationshistorik</a> · <a href="/updates">Uppdateringar</a> · <a href="/simulation">Inspelning / simulering</a> · <a href="/navigation">Position</a> · <a href="/diagnostics">Sensordiagnostik</a></nav>
-
-@Body
-<Sensor3.SharedUI.Components.StepDiagnostics />
-
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+@inject IServiceProvider Services
+<div class="app-shell">
+    <aside class="app-sidebar">
+        <a class="app-brand" href="/"><span class="brand-mark" aria-hidden="true">S3</span><span>Sensor 3<small>Motion & position</small></span></a>
+        <span class="sidebar-label">ARBETSYTA</span>
+        <nav class="app-nav" aria-label="Huvudnavigation">
+            <NavLink href="/" Match="NavLinkMatch.All">Översikt</NavLink>
+            <NavLink href="/navigation">Position</NavLink>
+            <NavLink href="/diagnostics">Sensordiagnostik</NavLink>
+            <NavLink href="/simulation">Inspelning / simulering</NavLink>
+            <NavLink href="/updates">Uppdateringar</NavLink>
+            <NavLink href="/about">Om / iterationshistorik</NavLink>
+            @if (!native)
+            {
+                <NavLink href="/download">Nedladdningar</NavLink>
+                <NavLink href="/admin/releases">Administration</NavLink>
+            }
+        </nav>
+        <div class="sidebar-footer"><span class="platform-badge">@(native ? "Native-klient" : "Serverdashboard")</span><small>Android & Windows</small></div>
+    </aside>
+    <div class="app-workspace">
+        <header class="app-topbar"><span>Rörelse & position</span><span class="build-badge">Version @Build.ApplicationVersion <span>· Iteration @Build.LatestImplementedIteration/18</span></span></header>
+        <main class="app-content" id="main-content">
+            @Body
+            <Sensor3.SharedUI.Components.StepDiagnostics />
+        </main>
+        <footer class="app-footer"><span>Sensor 3 · @(native ? "Native sensorinsamling" : "Analys från anslutna klienter")</span><a href="/about">Commit @Build.GitCommitShortHash</a></footer>
+    </div>
 </div>
-
+<div id="blazor-error-ui" data-nosnippet role="alert">Ett fel uppstod. <a href="." class="reload">Ladda om</a><span class="dismiss" aria-label="Stäng">×</span></div>
+@code {
+    private bool native;
+    protected override void OnInitialized() => native = Services.GetService(typeof(Sensor3.Contracts.ISensorProvider)) is not null;
+}

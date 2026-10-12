@@ -1,9 +1,13 @@
 @page "/"
-
 <PageTitle>Sensor 3</PageTitle>
-<h1>Sensor 3</h1>
-<p>Rörelseanalys och inomhuspositionering med sensorer i Android- och Windows-appen.</p>
-<p><a href="/sensors">Sensorinsamling</a> och <a href="/diagnostics">diagnostik</a> visar tillgängliga sensorer, kvalitet och faktiskt levererade mätvärden. Webbläsaren visar analys och samlar inte in native-sensorer.</p>
-<p><a href="/navigation">Positionering</a> kombinerar steg, personriktning och uttryckliga start- och radioreferenser. Truckens GPS-baserade rörelse redovisas separat.</p>
-<p><a href="/simulation">Inspelning och replay</a> låter dig exportera egna sessioner eller prova tydligt märkta syntetiska scenarier. Modellerna behöver fysisk validering innan deras noggrannhet kan fastställas.</p>
-<p><a href="/about">Version och iterationshistorik</a> · <a href="/download">Nedladdningar</a></p>
+<section class="home-hero">
+    <div><span class="eyebrow">SENSOR 3 / ARBETSYTA</span><h1>Från rörelse<br />till position.</h1><p>Samla sensordata, följ rörelsen och utforska positionen. En gemensam arbetsyta för Android, Windows och serveranalys.</p><div class="hero-actions"><a class="button-link" href="/navigation">Öppna positionering <span aria-hidden="true">↗</span></a><a class="secondary-link" href="/diagnostics">Visa diagnostik →</a></div></div>
+    <div class="hero-visual" aria-hidden="true"><svg viewBox="0 0 320 240"><defs><pattern id="sensor-grid" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="12" cy="12" r="1" fill="#8bb4bd" /></pattern></defs><rect width="320" height="240" fill="url(#sensor-grid)" /><circle cx="215" cy="80" r="55" fill="none" stroke="#b2d8de" /><circle cx="215" cy="80" r="30" fill="none" stroke="#b2d8de" /><path d="M45 195 L90 195 L90 145 L155 145 L155 80 L215 80" fill="none" stroke="#087f8c" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" /><circle cx="45" cy="195" r="7" fill="#163047" /><circle cx="215" cy="80" r="9" fill="#087f8c" /><circle cx="215" cy="80" r="16" fill="none" stroke="#087f8c" stroke-width="2" /></svg><span>Illustration · lokal rörelse</span></div>
+</section>
+<div class="section-heading"><h2>Din arbetsyta</h2><span>Välj nästa steg</span></div>
+<div class="home-grid">
+    <a class="workspace-card" href="/navigation"><span class="card-index">01 / POSITION</span><h2>Följ rörelsen</h2><p>Starta positionering i klienten och se lokal position, riktning och osäkerhet.</p><span class="card-action">Öppna position <span aria-hidden="true">↗</span></span></a>
+    <a class="workspace-card" href="/diagnostics"><span class="card-index">02 / SENSORER</span><h2>Se vad enheten mäter</h2><p>Tillgängliga sensorer, rådata, levererad frekvens och kvalitet i samma vy.</p><span class="card-action">Öppna diagnostik <span aria-hidden="true">↗</span></span></a>
+    <a class="workspace-card" href="/simulation"><span class="card-index">03 / INSPELNING</span><h2>Spela upp och jämför</h2><p>Utforska egna inspelningar eller tydligt märkta syntetiska scenarier.</p><span class="card-action">Öppna inspelning <span aria-hidden="true">↗</span></span></a>
+</div>
+<p class="workspace-note">Sensorinsamling sker i Android- och Windows-appen. Webbläsaren visar analys från native-klienter. Position och modeller behöver fältvalidering.</p>

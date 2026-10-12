@@ -1,0 +1,10 @@
+[
+  {
+    "Name": "Sensor 3 - alla startprojekt",
+    "Projects": [
+      { "Path": "Sensor3.Api\\Sensor3.Api.csproj", "Action": "Start" },
+      { "Path": "Sensor3.Dashboard\\Sensor3.Dashboard.csproj", "Action": "Start" },
+      { "Path": "Sensor3.Mobile\\Sensor3.Mobile.csproj", "Action": "Start" }
+    ]
+  }
+]

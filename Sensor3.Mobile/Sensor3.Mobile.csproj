@@ -52,10 +52,10 @@
     <EmbeddedResource Include="Resources\Raw\update-settings.json" LogicalName="Sensor3.UpdateSettings.json" Condition="'$(Sensor3UpdateSettingsPath)' == ''" />
     <EmbeddedResource Include="$(Sensor3UpdateSettingsPath)" LogicalName="Sensor3.UpdateSettings.json" Condition="'$(Sensor3UpdateSettingsPath)' != ''" />
     <!-- App Icon -->
-    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
+    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#142c40" />
 
     <!-- Splash Screen -->
-    <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+    <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#142c40" BaseSize="128,128" />
 
     <!-- Images -->
     <MauiImage Include="Resources\Images\*" />

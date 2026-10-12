@@ -33,3 +33,5 @@ Visual Studios egen MSBuild har också använts för hela Android-/Windows-lösn
 BuildInfo bäddas in med faktisk HEAD, commitdatum, separat byggdatum, dirty-status, plattform och implemented/verified/published. Bygg från en ren commit för spårbara testpaket. `iterations.json` lagrar implementationscommitten i en separat metadatacommit eftersom en commit inte kan innehålla sin egen hash. Version/build är inte bevis på Verified eller Released.
 
 Se [ARCHITECTURE.md](ARCHITECTURE.md), [SENSORS.md](SENSORS.md), [ALGORITHMS.md](ALGORITHMS.md), [RESEARCH.md](RESEARCH.md), [masterplan](docs/MASTERPLAN.md) och rapporterna i `docs/iteration-01.md`–`18.md`.
+
+Visual Studio F5: API, Dashboard och Mobile är gemensamma startprojekt i profilen **Sensor 3 - alla startprojekt**. Se [startinställningar](docs/visual-studio-startup.md).
