@@ -30,11 +30,14 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
     app.UseHttpsRedirection();
 }
-app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+// JSON/SignalR errors must retain their status instead of re-executing a browser page on POST.
+app.UseWhen(context => !context.Request.Path.StartsWithSegments("/api") && !context.Request.Path.StartsWithSegments("/hubs"),
+    branch => branch.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true));
 
 app.UseDistribution();
 app.MapDistribution();
 app.MapSensorTelemetry();
+app.MapDevicePairing();
 
 app.MapStaticAssets();
 

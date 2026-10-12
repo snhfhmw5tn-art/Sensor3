@@ -21,6 +21,7 @@ public static class MauiProgram
             });
 
         builder.Services.AddMauiBlazorWebView();
+        builder.Services.AddSingleton<Sensor3.Contracts.IDevicePairingClient, NativeDevicePairingClient>();
         using var settings = typeof(MauiProgram).Assembly.GetManifestResourceStream("Sensor3.UpdateSettings.json")
             ?? throw new InvalidOperationException("Uppdateringsinställningar saknas.");
         var updateOptions = System.Text.Json.JsonSerializer.Deserialize<Sensor3.Core.ApplicationUpdateOptions>(settings, Sensor3.Core.ApplicationUpdateService.JsonOptions)

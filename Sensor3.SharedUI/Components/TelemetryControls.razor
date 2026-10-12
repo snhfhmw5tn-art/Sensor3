@@ -4,7 +4,14 @@
 @if (client is not null)
 {
     <section><h2>Överföring till server</h2>
-        <p>Enhets-ID: @client.DeviceId. Registrera en SHA-256-hash av enhetstoken i serverns Telemetry:DeviceTokenHashes. Serverns HTTPS-certifikat måste vara betrott av enheten.</p>
+        <p>Enhets-ID: @client.DeviceId. Enhetstoken sparas automatiskt efter QR-registrering.</p>
+        @if (pairing is not null)
+        {
+            <label>Registreringslänk från Dashboardens QR-kod <input @bind="pairingLink" autocomplete="off" placeholder="Skanna QR-koden med telefonens kamera eller klistra in länken" /></label>
+            @if (PairingServer is not null) { <p>Registrera på server: <strong>@PairingServer</strong></p> }
+            <button @onclick="PairDevice" disabled="@(busy || positioning?.IsActive == true || PairingServer is null)">Registrera enhet på denna server</button>
+            <p>@(savedCredential is null ? "Ingen sparad enhetstoken." : "Enhetstoken sparad säkert. Du kan starta positionering.")</p>
+        }
         <label>HTTPS-server <input @bind="endpoint" placeholder="https://server.example" /></label>
         <label>Enhetstoken <input type="password" @bind="token" autocomplete="off" /></label>
         <label>Läge <select @bind="mode"><option value="Research">Research · 100 ms</option><option value="Production">Production · 250 ms</option></select></label>
@@ -22,6 +29,12 @@
 }
 @code {
     private ITelemetryClient? client;
+    private IDevicePairingClient? pairing;
+    private SavedDeviceCredential? savedCredential;
+    private string pairingLink = "";
+    private string? PairingServer { get { try { return PairingLink.Parse(pairingLink).Server.AbsoluteUri; } catch (ArgumentException) { return null; } } }
+    private string EffectiveToken => token.Length != 0 ? token : savedCredential is not null && Uri.TryCreate(endpoint, UriKind.Absolute, out var address)
+        && address.GetLeftPart(UriPartial.Authority) == new Uri(savedCredential.Server).GetLeftPart(UriPartial.Authority) ? savedCredential.Token : "";
     private Sensor3.Sensors.PositioningSession? positioning;
     private string endpoint = "https://prototyp.qsys.se", token = "", message = "Inte ansluten";
     private TelemetryMode mode;
@@ -32,12 +45,39 @@
     {
         positioning = Services.GetService(typeof(Sensor3.Sensors.PositioningSession)) as Sensor3.Sensors.PositioningSession;
         client = Services.GetService(typeof(ITelemetryClient)) as ITelemetryClient;
+        pairing = Services.GetService(typeof(IDevicePairingClient)) as IDevicePairingClient;
         if (client is not null) timer = new(_ => { _ = Refresh(); }, null, 1000, 1000);
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        if (pairing is null) return;
+        try
+        {
+            savedCredential = await pairing.LoadAsync();
+            if (savedCredential is not null) endpoint = savedCredential.Server;
+            pairingLink = pairing.PendingLink ?? "";
+        }
+        catch (Exception) { message = "Säker lagring kunde inte läsas. Registrera enheten igen eller ange token manuellt."; }
+    }
+    private async Task PairDevice()
+    {
+        busy = true;
+        try
+        {
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(25));
+            savedCredential = await pairing!.PairAsync(pairingLink, timeout.Token);
+            endpoint = savedCredential.Server;
+            pairingLink = "";
+            token = "";
+            message = "Enheten registrerad. Tryck på Starta positionering.";
+        }
+        catch (Exception exception) { message = exception.Message; }
+        finally { busy = false; }
     }
     private async Task Refresh()
     {
         if (disposed) return;
-        try { await InvokeAsync(() => { if (!disposed) { statistics = client?.GetStatistics(); StateHasChanged(); } }); }
+        try { await InvokeAsync(() => { if (!disposed) { if (pairing?.PendingLink is string link) pairingLink = link; statistics = client?.GetStatistics(); StateHasChanged(); } }); }
         catch (ObjectDisposedException) when (disposed) { }
         catch (TaskCanceledException) when (disposed) { }
     }
@@ -47,7 +87,7 @@
         try
         {
             using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(2));
-            var count = await positioning!.StartAsync(new Uri(endpoint), token, mode, timeout.Token);
+            var count = await positioning!.StartAsync(new Uri(endpoint), EffectiveToken, mode, timeout.Token);
             token = "";
             message = $"Positionering startad med {count} tillgängliga sensorer. Loggning och serveröverföring pågår.";
         }
@@ -64,7 +104,7 @@
     private async Task Connect()
     {
         busy = true;
-        try { using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20)); await client!.ConnectAsync(new Uri(endpoint), token, mode, timeout.Token); token = ""; message = "Ansluten. Starta sensorinsamling för att skicka mätvärden."; }
+        try { using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20)); await client!.ConnectAsync(new Uri(endpoint), EffectiveToken, mode, timeout.Token); token = ""; message = "Ansluten. Starta sensorinsamling för att skicka mätvärden."; }
         catch (Exception exception) { message = exception.Message; }
         finally { busy = false; }
     }

@@ -19,7 +19,7 @@ namespace Sensor3.Infrastructure;
 
 public sealed class TelemetryAuthOptions { public Dictionary<string, string> DeviceTokenHashes { get; set; } = []; }
 public sealed class DeviceAuthentication(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder,
-    IOptionsMonitor<TelemetryAuthOptions> credentials) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+    IOptionsMonitor<TelemetryAuthOptions> credentials, DevicePairingStore pairing) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
     public const string SchemeName = "TelemetryDevice";
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -27,8 +27,9 @@ public sealed class DeviceAuthentication(IOptionsMonitor<AuthenticationSchemeOpt
         if (!Request.IsHttps) return Task.FromResult(AuthenticateResult.Fail("HTTPS krävs."));
         var device = Request.Headers["X-Sensor3-DeviceId"].ToString();
         var authorization = Request.Headers.Authorization.ToString();
+        var expected = credentials.CurrentValue.DeviceTokenHashes.GetValueOrDefault(device) ?? pairing.GetHash(device);
         if (device.Length is < 1 or > 64 || !authorization.StartsWith("Bearer ", StringComparison.Ordinal) || authorization.Length > 512 ||
-            !credentials.CurrentValue.DeviceTokenHashes.TryGetValue(device, out var expected)) return Task.FromResult(AuthenticateResult.Fail("Enhetsbehörighet saknas."));
+            expected is null) return Task.FromResult(AuthenticateResult.Fail("Enhetsbehörighet saknas."));
         try
         {
             var actual = SHA256.HashData(Encoding.UTF8.GetBytes(authorization[7..]));
@@ -65,12 +66,13 @@ public sealed class TelemetryProcessor(TelemetryQueue queue, TelemetryRegistry r
     }
 }
 [Authorize(AuthenticationSchemes = DeviceAuthentication.SchemeName)]
-public sealed class TelemetryHub(TelemetryRegistry registry, TelemetryQueue queue, BuildInfo build, IOptionsMonitor<TelemetryAuthOptions> credentials) : Hub
+public sealed class TelemetryHub(TelemetryRegistry registry, TelemetryQueue queue, BuildInfo build, IOptionsMonitor<TelemetryAuthOptions> credentials, DevicePairingStore pairing) : Hub
 {
     private string Device => Context.User!.FindFirstValue(ClaimTypes.NameIdentifier)!;
     private void ValidateCredential()
     {
-        if (!credentials.CurrentValue.DeviceTokenHashes.TryGetValue(Device, out var hash) || hash != Context.User!.FindFirstValue("credential"))
+        var hash = credentials.CurrentValue.DeviceTokenHashes.GetValueOrDefault(Device) ?? pairing.GetHash(Device);
+        if (hash is null || hash != Context.User!.FindFirstValue("credential"))
         { Context.Abort(); throw new HubException("Enhetsbehörigheten har återkallats."); }
     }
     public BuildInfo Register(TelemetryRegistration registration)
@@ -95,6 +97,8 @@ public static class TelemetryHosting
     public static void AddSensorTelemetry(this WebApplicationBuilder builder)
     {
         builder.Services.Configure<TelemetryAuthOptions>(builder.Configuration.GetSection("Telemetry"));
+        builder.Services.AddSingleton(new DevicePairingStore(builder.Configuration["Pairing:StorageDirectory"]
+            ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sensor3", "pairing"), TimeProvider.System));
         builder.Services.AddAuthentication().AddScheme<AuthenticationSchemeOptions, DeviceAuthentication>(DeviceAuthentication.SchemeName, _ => { });
         builder.Services.AddAuthorization();
         builder.Services.AddSignalR(x => { x.MaximumReceiveMessageSize = 1024 * 1024; x.MaximumParallelInvocationsPerClient = 1; });
@@ -112,6 +116,14 @@ public static class TelemetryHosting
             await next(context);
         });
         app.MapHub<TelemetryHub>("/hubs/sensors");
+        app.MapPost("/api/pairing/redeem", (HttpContext context, PairingRequest request, DevicePairingStore pairing, IOptionsMonitor<TelemetryAuthOptions> credentials) =>
+        {
+            context.Response.Headers.CacheControl = "no-store";
+            if (!context.Request.IsHttps) return Results.BadRequest(new { error = "HTTPS krävs." });
+            if (request.Code is null || request.DeviceId is null || request.Code.Length != 64 || credentials.CurrentValue.DeviceTokenHashes.ContainsKey(request.DeviceId)) return Results.BadRequest();
+            var token = pairing.Redeem(request.Code, request.DeviceId);
+            return token is null ? Results.BadRequest(new { error = "Koden är använd, utgången eller enheten är redan registrerad." }) : Results.Json(new PairingCredential(token));
+        });
         app.MapGet("/api/telemetry/sessions", (TelemetryRegistry registry) => registry.GetSessions()).RequireAuthorization(x => x.RequireRole("ReleaseAdministrator"));
         app.MapGet("/api/telemetry/sessions/{id:guid}/analysis", (Guid id, TelemetryRegistry registry) => registry.GetAnalysis(id)).RequireAuthorization(x => x.RequireRole("ReleaseAdministrator"));
         app.MapGet("/api/telemetry/sessions/{id:guid}", (Guid id, TelemetryRegistry registry) => registry.GetDiagnostics(id)).RequireAuthorization(x => x.RequireRole("ReleaseAdministrator"));
