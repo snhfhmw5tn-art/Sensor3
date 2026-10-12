@@ -2,6 +2,7 @@
 @using Sensor3.Contracts
 @inject IServiceProvider Services
 <h1>Lokal position</h1>
+<TelemetryControls />
 @if (session is not null)
 {
     <label>Start X (m) <input type="number" @bind="x" /></label>
@@ -13,7 +14,7 @@
 }
 else { <p>Native-enhet krävs för lokal mätning. Webbläsaren samlar inga rörelsesensorer.</p> }
 <LiveIndoorMap Position="mapPosition" Heading="mapHeading" StepCount="@(steps?.GetSnapshot().Total ?? 0)" Truck="@(activity?.IsForkliftDeclared == true)" />
-<SensorDiagnosticsView />
+<SensorDiagnosticsView ShowTelemetry="false" />
 @code {
     private IForkliftMotionEstimator? vehicle;
     private PositionSnapshot? mapPosition;

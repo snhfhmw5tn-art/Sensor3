@@ -97,9 +97,11 @@ else
 <ActivityDiagnostics />
 <CarryingDiagnostics />
 <HeadingDiagnostics />
-<TelemetryControls />
+@if (ShowTelemetry) { <TelemetryControls /> }
 <RemoteDiagnostics />
 @code {
+    [Parameter] public bool ShowTelemetry { get; set; } = true;
+    private bool sharedDiagnostics;
     private ISensorProvider? Provider;
     private ISensorPermissionService? PermissionService;
     private IStepSession? Steps;
@@ -114,14 +116,13 @@ else
     private System.Threading.Timer? refresh;
     protected override async Task OnInitializedAsync()
     {
-        // Resolve optional native services once, while the component's DI scope is alive.
+        sharedDiagnostics = Services.GetService(typeof(PositioningSession)) is PositioningSession;
         Provider = Services.GetService(typeof(ISensorProvider)) as ISensorProvider;
         PermissionService = Services.GetService(typeof(ISensorPermissionService)) as ISensorPermissionService;
         Steps = Services.GetService(typeof(IStepSession)) as IStepSession;
         if (Provider is { } provider)
         {
-            provider.ReadingReceived += Store.Receive;
-            provider.StateChanged += Store.SetState;
+            if (!sharedDiagnostics) { provider.ReadingReceived += Store.Receive; provider.StateChanged += Store.SetState; }
             await Discover();
         }
         else snapshot = Store.GetSnapshot();
@@ -185,6 +186,6 @@ else
         // Keep subscribed through stop so retained diagnostic data gets an accurate Inactive status.
         try { await provider.StopAsync(); }
         catch (ObjectDisposedException) { /* The native host may dispose singleton services before the WebView. */ }
-        finally { provider.ReadingReceived -= Store.Receive; provider.StateChanged -= Store.SetState; }
+        finally { if (!sharedDiagnostics) { provider.ReadingReceived -= Store.Receive; provider.StateChanged -= Store.SetState; } }
     }
 }

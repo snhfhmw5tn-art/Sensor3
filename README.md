@@ -23,6 +23,7 @@ Visual Studios egen MSBuild har också använts för hela Android-/Windows-lösn
 - `/simulation`: starta lokal inspelning **före** native-insamlingen. Bekräfta kända startreferenser, starta sensorer på samma sida, stoppa och exportera JSON/CSV. Import, tidslinje, paus/hastighet, separat ground truth och 15 tydligt märkta syntetiska scenarier. Data sparas bara genom uttrycklig export.
 - Truckläge är en operatörsuppgift. GPS-origin + färsk tillförlitlig fix krävs. Trucksträcka är separat; handacceleration integreras inte till trucktranslation.
 - WiFi/BLE: registrera uppmätta lokala punkter/identifierare i samma XY-ram. Radiokarta lagras i appdata och kan importeras/exporteras. RSSI är inte exakt avstånd.
+- Positionering: i native-klientens **Position** finns **Starta positionering**, som startar alla tillgängliga sensorer, lokal inspelning och serveröverföring. Förvald server är `https://prototyp.qsys.se`; ange registrerad enhetstoken. Se [startflöde och validering](docs/positioning-start.md).
 - Telemetri: stoppa insamlingen, anslut till en betrodd HTTPS-server med enhetstoken, starta sedan valda sensorer. Administratör väljer session i dashboarden; sessionerna får separata beräkningskedjor. Referenser kan sättas per server-session. API- och Dashboard-processer har varsin registry; anslut till dashboardens HTTPS-origin för dess livevy.
 
 ## Distribution och metadata

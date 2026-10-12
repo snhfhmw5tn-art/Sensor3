@@ -8,6 +8,12 @@
         <label>HTTPS-server <input @bind="endpoint" placeholder="https://server.example" /></label>
         <label>Enhetstoken <input type="password" @bind="token" autocomplete="off" /></label>
         <label>Läge <select @bind="mode"><option value="Research">Research · 100 ms</option><option value="Production">Production · 250 ms</option></select></label>
+        @if (positioning is not null)
+        {
+            <button @onclick="StartPositioning" disabled="@(busy || positioning.IsActive)">Starta positionering</button>
+            <button @onclick="StopPositioning" disabled="@(busy || !positioning.IsActive)">Stoppa positionering</button>
+            <p>Native-sensorer startas automatiskt. Lokal logg: @positioning.FrameCount händelser · @(positioning.IsRecording ? "spelar in" : "stoppad"). Mätvärden och analys visas i serverns diagnostik för denna enhet.</p>
+        }
         <button @onclick="Connect" disabled="@busy">Anslut</button><button @onclick="Disconnect" disabled="@busy">Koppla från</button>
         <p role="status">@message</p>
         <p>@statistics?.Status · paket: @statistics?.Packets · JSON-byte: @statistics?.PayloadBytes · tappade köhändelser: @statistics?.DroppedEvents · RTT: @statistics?.RoundTripMilliseconds?.ToString("F1") ms</p>
@@ -16,13 +22,15 @@
 }
 @code {
     private ITelemetryClient? client;
-    private string endpoint = "", token = "", message = "Inte ansluten";
+    private Sensor3.Sensors.PositioningSession? positioning;
+    private string endpoint = "https://prototyp.qsys.se", token = "", message = "Inte ansluten";
     private TelemetryMode mode;
     private TelemetryStatistics? statistics;
     private bool busy, disposed;
     private System.Threading.Timer? timer;
     protected override void OnInitialized()
     {
+        positioning = Services.GetService(typeof(Sensor3.Sensors.PositioningSession)) as Sensor3.Sensors.PositioningSession;
         client = Services.GetService(typeof(ITelemetryClient)) as ITelemetryClient;
         if (client is not null) timer = new(_ => { _ = Refresh(); }, null, 1000, 1000);
     }
@@ -33,6 +41,26 @@
         catch (ObjectDisposedException) when (disposed) { }
         catch (TaskCanceledException) when (disposed) { }
     }
+    private async Task StartPositioning()
+    {
+        busy = true;
+        try
+        {
+            using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+            var count = await positioning!.StartAsync(new Uri(endpoint), token, mode, timeout.Token);
+            token = "";
+            message = $"Positionering startad med {count} tillgängliga sensorer. Loggning och serveröverföring pågår.";
+        }
+        catch (Exception exception) { message = "Positionering kunde inte startas: " + exception.Message; }
+        finally { statistics = client!.GetStatistics(); busy = false; }
+    }
+    private async Task StopPositioning()
+    {
+        busy = true;
+        try { await positioning!.StopAsync(); message = "Positionering stoppad. Lokal logg sparad i sessionen."; }
+        catch (Exception exception) { message = exception.Message; }
+        finally { statistics = client!.GetStatistics(); busy = false; }
+    }
     private async Task Connect()
     {
         busy = true;
@@ -40,6 +68,6 @@
         catch (Exception exception) { message = exception.Message; }
         finally { busy = false; }
     }
-    private async Task Disconnect() { await client!.DisconnectAsync(); statistics = client.GetStatistics(); message = "Frånkopplad"; }
-    public async ValueTask DisposeAsync() { disposed = true; timer?.Dispose(); if (client is not null) await client.DisconnectAsync(); }
+    private async Task Disconnect() { if (positioning is not null) await positioning.StopAsync(); await client!.DisconnectAsync(); statistics = client.GetStatistics(); message = "Frånkopplad"; }
+    public async ValueTask DisposeAsync() { disposed = true; timer?.Dispose(); if (positioning is not null) await positioning.StopAsync(); if (client is not null) await client.DisconnectAsync(); }
 }

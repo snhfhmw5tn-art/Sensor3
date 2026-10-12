@@ -8,7 +8,7 @@
 @if (recorder is not null)
 {
     <label><input type="checkbox" @bind="confirmStart" /> Bekräfta känd lokal start nedan före inspelning</label><label>X m <input type="number" @bind="startX" /></label><label>Y m <input type="number" @bind="startY" /></label><label>Person-heading rad <input type="number" @bind="startHeading" /></label>
-    <label>Sessionsnamn <input @bind="name" /></label><button disabled="@recorder.IsRecording" @onclick="Start">Starta lokal inspelning</button><button disabled="@(!recorder.IsRecording)" @onclick="Stop">Stoppa / öppna inspelningen</button>
+    <label>Sessionsnamn <input @bind="name" /></label><button disabled="@recorder.IsRecording" @onclick="Start">Starta lokal inspelning</button><button disabled="@(!recorder.IsRecording && recorder.FrameCount == 0)" @onclick="Stop">Stoppa / öppna inspelningen</button>
     <p>Inspelade händelser @recorder.FrameCount. Starta valda native-sensorer i diagnostiken på denna sida. Inspelningen kan fortsätta i minnet över sidbyte, men sidbyte stoppar native-insamlingen. Max 60 000 händelser, därefter tydligt Truncated.</p>
 }
 <label>Syntetiskt scenario <select @bind="scenario">@foreach (var value in Enum.GetValues<SyntheticScenario>()) { <option value="@value">SYNTHETIC @value</option> }</select></label><button @onclick="Generate">Skapa syntetiskt underlag</button>
